@@ -6,6 +6,7 @@ import {
   type PaymentMeansFields,
   type VatSubtotalFields,
   type LineFields,
+  type DeliveryFields,
 } from "./xrechnung-mapping.js";
 
 /**
@@ -48,6 +49,27 @@ function renderParty(wrapperTag: string, party: PartyFields): string {
   </${wrapperTag}>`;
 }
 
+function renderDelivery(delivery: DeliveryFields): string {
+  const actualDeliveryDate = delivery.actualDeliveryDate
+    ? `\n    <cbc:ActualDeliveryDate>${delivery.actualDeliveryDate}</cbc:ActualDeliveryDate>`
+    : "";
+  const deliverTo = delivery.deliverTo;
+  const city = deliverTo?.city ? `\n        <cbc:CityName>${esc(deliverTo.city)}</cbc:CityName>` : "";
+  const postalCode = deliverTo?.postalCode
+    ? `\n        <cbc:PostalZone>${esc(deliverTo.postalCode)}</cbc:PostalZone>`
+    : "";
+  const country = deliverTo?.countryCode
+    ? `\n        <cac:Country><cbc:IdentificationCode>${deliverTo.countryCode}</cbc:IdentificationCode></cac:Country>`
+    : "";
+  const deliveryLocation =
+    city || postalCode || country
+      ? `\n    <cac:DeliveryLocation>\n      <cac:Address>${city}${postalCode}${country}\n      </cac:Address>\n    </cac:DeliveryLocation>`
+      : "";
+
+  return `  <cac:Delivery>${actualDeliveryDate}${deliveryLocation}
+  </cac:Delivery>`;
+}
+
 function renderPaymentMeans(pm: PaymentMeansFields): string {
   const iban = pm.iban ? `\n      <cbc:ID>${esc(pm.iban)}</cbc:ID>` : "";
   const accountName = pm.accountName ? `\n      <cbc:Name>${esc(pm.accountName)}</cbc:Name>` : "";
@@ -88,6 +110,10 @@ function renderLine(line: LineFields, currency: string): string {
   const description = line.description
     ? `\n      <cbc:Description>${esc(line.description)}</cbc:Description>`
     : "";
+  // BR-O-05: an invoice line whose VAT category is 'O' (outside VAT scope) must not
+  // carry an item VAT rate at all — not even 0.
+  const percent =
+    line.vatCategoryCode === "O" ? "" : `\n        <cbc:Percent>${line.vatRate}</cbc:Percent>`;
 
   return `  <cac:InvoiceLine>
     <cbc:ID>${esc(line.id)}</cbc:ID>
@@ -96,8 +122,7 @@ function renderLine(line: LineFields, currency: string): string {
     <cac:Item>${description}
       <cbc:Name>${esc(line.name)}</cbc:Name>
       <cac:ClassifiedTaxCategory>
-        <cbc:ID>${line.vatCategoryCode}</cbc:ID>
-        <cbc:Percent>${line.vatRate}</cbc:Percent>
+        <cbc:ID>${line.vatCategoryCode}</cbc:ID>${percent}
         <cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme>
       </cac:ClassifiedTaxCategory>
     </cac:Item>
@@ -115,6 +140,7 @@ export function toXRechnung(invoice: Invoice): string {
   const buyerRef = fields.buyerReference
     ? `\n  <cbc:BuyerReference>${esc(fields.buyerReference)}</cbc:BuyerReference>`
     : "";
+  const delivery = fields.delivery ? `\n${renderDelivery(fields.delivery)}` : "";
   const paymentMeans = fields.paymentMeans ? `\n${renderPaymentMeans(fields.paymentMeans)}` : "";
   const dueDate = fields.dueDate ? `\n  <cbc:DueDate>${fields.dueDate}</cbc:DueDate>` : "";
 
@@ -142,7 +168,7 @@ export function toXRechnung(invoice: Invoice): string {
   <cbc:InvoiceTypeCode>${fields.typeCode}</cbc:InvoiceTypeCode>${note}
   <cbc:DocumentCurrencyCode>${currency}</cbc:DocumentCurrencyCode>${buyerRef}
 ${renderParty("cac:AccountingSupplierParty", fields.seller)}
-${renderParty("cac:AccountingCustomerParty", fields.buyer)}${paymentMeans}
+${renderParty("cac:AccountingCustomerParty", fields.buyer)}${delivery}${paymentMeans}
   <cac:TaxTotal>
     <cbc:TaxAmount currencyID="${currency}">${amt(fields.taxAmount)}</cbc:TaxAmount>
 ${vatSubtotals}

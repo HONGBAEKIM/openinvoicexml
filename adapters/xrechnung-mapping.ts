@@ -98,6 +98,30 @@ export function mapLine(line: InvoiceLine): LineFields {
   };
 }
 
+export interface DeliverToFields {
+  city?: string | undefined;
+  postalCode?: string | undefined;
+  countryCode?: string | undefined;
+}
+
+export interface DeliveryFields {
+  actualDeliveryDate?: string | undefined;
+  deliverTo?: DeliverToFields | undefined;
+}
+
+export function mapDelivery(delivery: NonNullable<Invoice["delivery"]>): DeliveryFields {
+  return {
+    actualDeliveryDate: delivery.actualDeliveryDate,
+    deliverTo: delivery.deliverTo
+      ? {
+          city: delivery.deliverTo.city,
+          postalCode: delivery.deliverTo.postalCode,
+          countryCode: delivery.deliverTo.countryCode,
+        }
+      : undefined,
+  };
+}
+
 export interface DocumentFields {
   id: string;
   typeCode: string;
@@ -109,6 +133,7 @@ export interface DocumentFields {
   buyerReference?: string | undefined;
   seller: PartyFields;
   buyer: PartyFields;
+  delivery?: DeliveryFields | undefined;
   paymentMeans?: PaymentMeansFields | undefined;
   taxAmount: number;
   vatSubtotals: VatSubtotalFields[];
@@ -138,6 +163,7 @@ export function mapInvoice(invoice: Invoice): DocumentFields {
     buyerReference: invoice.buyerReference,
     seller: mapParty(invoice.seller),
     buyer: mapParty(invoice.buyer),
+    delivery: invoice.delivery ? mapDelivery(invoice.delivery) : undefined,
     paymentMeans: invoice.paymentMeans ? mapPaymentMeans(invoice.paymentMeans) : undefined,
     taxAmount: invoice.taxAmount,
     vatSubtotals: invoice.vatBreakdowns.map(mapVatSubtotal),

@@ -72,4 +72,29 @@ export interface Invoice {
     id: string;
     issueDate: string;
   };
+
+  /**
+   * BG-13: Delivery information.
+   *
+   * For category "K", BR-IC-11 requires BT-72 or BG-14.
+   * BG-14 is not currently supported, so this implementation requires BT-72.
+   */
+  delivery?: {
+    /** BT-72: Actual delivery or performance date (YYYY-MM-DD). */
+    actualDeliveryDate?: string;
+
+    /** BG-15: Deliver-to address. */
+    deliverTo?: {
+      /** BT-77: Deliver-to city. */
+      city?: string;
+      /** BT-78: Deliver-to postal code. */
+      postalCode?: string;
+      /**
+       * BT-80: Deliver-to country code (ISO 3166-1 alpha-2).
+       * Required for every BG-15 address by BR-57, and for category "K"
+       * by BR-IC-12.
+       */
+      countryCode?: string;
+    };
+  };
 }

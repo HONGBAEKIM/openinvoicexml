@@ -193,6 +193,35 @@ describe("Invoice JSON Schema", () => {
     });
   });
 
+  describe.each(fixtures)("delivery (BG-13/BG-15) (%s)", (_label, fixture) => {
+    it("accepts a delivery.deliverTo address with a country code", () => {
+      const good = {
+        ...fixture,
+        delivery: {
+          actualDeliveryDate: "2026-07-20",
+          deliverTo: { city: "Paris", postalCode: "75001", countryCode: "FR" },
+        },
+      };
+      expect(validate(good)).toBe(true);
+    });
+
+    it("rejects the old flat delivery fields", () => {
+      const bad = {
+        ...fixture,
+        delivery: { city: "Paris", postalCode: "75001", countryCode: "FR" },
+      };
+      expect(validate(bad)).toBe(false);
+    });
+
+    it("rejects a deliverTo address missing countryCode", () => {
+      const bad = {
+        ...fixture,
+        delivery: { deliverTo: { city: "Paris" } },
+      };
+      expect(validate(bad)).toBe(false);
+    });
+  });
+
   describe("multi-line specific checks", () => {
     it("rejects when a non-first line has an unrecognised field", () => {
       const bad = {

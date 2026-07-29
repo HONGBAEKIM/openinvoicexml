@@ -147,6 +147,39 @@
         }
       },
       "description": "BT-25 / BT-26: Reference to the invoice being corrected or credited."
+    },
+    "delivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "actualDeliveryDate": {
+          "type": "string",
+          "format": "date",
+          "description": "BT-72: Actual delivery or performance date (YYYY-MM-DD)."
+        },
+        "deliverTo": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["countryCode"],
+          "properties": {
+            "city": {
+              "type": "string",
+              "description": "BT-77: Deliver-to city."
+            },
+            "postalCode": {
+              "type": "string",
+              "description": "BT-78: Deliver-to postal code."
+            },
+            "countryCode": {
+              "type": "string",
+              "pattern": "^[A-Z]{2}$",
+              "description": "BT-80: Deliver-to country code (ISO 3166-1 alpha-2). Required by BR-57 whenever a deliver-to address is supplied."
+            }
+          },
+          "description": "BG-15: Deliver-to address."
+        }
+      },
+      "description": "BG-13: Delivery information. BT-72 (or the unsupported BG-14 invoicing-period alternative) and BT-80 are required by BR-IC-11/BR-IC-12 when any VAT breakdown uses category 'K' (intra-EU supply)."
     }
   },
   "$defs": {
@@ -332,6 +365,25 @@
         "exemptionReasonCode": {
           "type": "string",
           "description": "BT-121: Coded reason for VAT exemption (VATEX code list)."
+        },
+        "reverseChargeReason": {
+          "type": "string",
+          "enum": [
+            "eu-cross-border-service",
+            "foreign-supplier",
+            "security-transfer",
+            "real-estate",
+            "construction",
+            "gas-and-electricity",
+            "emission-certificates",
+            "scrap-and-waste",
+            "cleaning",
+            "qualifying-gold",
+            "mobile-devices",
+            "industrial-metals",
+            "telecommunications"
+          ],
+          "description": "§13b UStG reverse-charge subcase (category 'AE' only). Internal only — not emitted to XML; VATEX has no per-subcase code."
         }
       }
     }

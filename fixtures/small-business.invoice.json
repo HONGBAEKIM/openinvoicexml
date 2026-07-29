@@ -1,0 +1,78 @@
+{
+  "id": "RE-2026-0051",
+  "typeCode": "380",
+  "issueDate": "2026-07-10",
+  "dueDate": "2026-08-09",
+  "currencyCode": "EUR",
+  "businessProcessType": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+  "buyerReference": "04011000-12345-03",
+
+  "seller": {
+    "name": "Anna Beispiel Webdesign",
+    "legalId": "HRA 12345, Amtsgericht Leipzig",
+    "taxRegistrationId": "12/345/67890",
+    "address": {
+      "line1": "Musterstraße 5",
+      "city": "Leipzig",
+      "postalCode": "04109",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "anna@beispiel-webdesign.example",
+    "electronicAddressSchemeId": "EM",
+    "contact": {
+      "name": "Anna Beispiel",
+      "telephone": "+49 341 1234567",
+      "email": "anna@beispiel-webdesign.example"
+    }
+  },
+
+  "buyer": {
+    "name": "Acme GmbH",
+    "address": {
+      "line1": "Marienplatz 1",
+      "city": "München",
+      "postalCode": "80331",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "einkauf@acme.example",
+    "electronicAddressSchemeId": "EM"
+  },
+
+  "lines": [
+    {
+      "id": "1",
+      "name": "Webdesign-Dienstleistung",
+      "description": "Erstellung einer Unternehmenswebsite",
+      "quantity": 1,
+      "unitCode": "C62",
+      "unitPrice": 800.0,
+      "lineAmount": 800.0,
+      "vatCategoryCode": "E",
+      "vatRate": 0
+    }
+  ],
+
+  "vatBreakdowns": [
+    {
+      "categoryCode": "E",
+      "rate": 0,
+      "taxableAmount": 800.0,
+      "taxAmount": 0.0,
+      "exemptionReason": "Gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
+    }
+  ],
+
+  "taxExclusiveAmount": 800.0,
+  "taxAmount": 0.0,
+  "taxInclusiveAmount": 800.0,
+  "duePayableAmount": 800.0,
+
+  "paymentMeans": {
+    "code": "58",
+    "iban": "DE02120300000000202051",
+    "accountName": "Anna Beispiel",
+    "bic": "BYLADEM1001"
+  },
+
+  "note": "Gemäß § 19 UStG wird keine Umsatzsteuer berechnet."
+}
