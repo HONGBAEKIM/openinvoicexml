@@ -1,11 +1,18 @@
 import type { Invoice } from "../core/types/invoice.js";
 import type { ValidationIssue } from "./types.js";
 import { isClose, round2 } from "../core/utils/monetary.js";
+import { resolvePlaceOfSupply } from "../core/utils/place-of-supply.js";
 import {
   EXEMPTION_REASON_REQUIRED_CATEGORIES,
   checkDecimalPrecision,
   checkVatRateForCategory,
 } from "./rules/vat-rate.js";
+import { checkSmallBusinessRequirements } from "./rules/small-business.js";
+import { checkOutsideScopeRequirements } from "./rules/outside-scope.js";
+import { checkIntraEuSupplyRequirements } from "./rules/intra-eu.js";
+import { checkDeliveryAddressRequirements } from "./rules/delivery.js";
+import { checkExportRequirements } from "./rules/export.js";
+import { checkReverseChargeSubcaseRequirements } from "./rules/reverse-charge.js";
 
 export type { ValidationIssue } from "./types.js";
 
@@ -15,6 +22,9 @@ export type { ValidationIssue } from "./types.js";
  * requirements, exemption reason requirements, and EN 16931 rounding/amount consistency.
  *
  * Returns an empty array when the invoice is fully compliant.
+ *
+ * @see ../docs/COMPLIANCE.md for the source, pinned version, and implementation status of
+ * every rule enforced here and in `validators/rules/*`.
  */
 export function validateBusinessRules(invoice: Invoice): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
@@ -52,6 +62,30 @@ export function validateBusinessRules(invoice: Invoice): ValidationIssue[] {
     });
   }
 
+  // --- §13b UStG reverse-charge subcases (VAT category 'AE') --------------
+  checkReverseChargeSubcaseRequirements(invoice.vatBreakdowns, issues);
+
+  // --- §19 UStG small business (VAT category 'E') -------
+  checkSmallBusinessRequirements(invoice.seller, invoice.vatBreakdowns, issues);
+
+  // --- Outside the scope of VAT (VAT category 'O') ------------------------
+  checkOutsideScopeRequirements(invoice.seller, invoice.buyer, invoice.vatBreakdowns, issues);
+
+  // --- Delivery address (BG-15) --------------------------------------------
+  checkDeliveryAddressRequirements(invoice.delivery, issues);
+
+  // --- Intra-EU supply (VAT category 'K') ---------------------------------
+  checkIntraEuSupplyRequirements(
+    invoice.seller,
+    invoice.buyer,
+    invoice.vatBreakdowns,
+    invoice.delivery,
+    issues,
+  );
+
+  // --- Export outside EU (VAT category 'G') --------------------------------
+  checkExportRequirements(invoice.buyer, invoice.vatBreakdowns, issues);
+
   // --- VAT breakdown checks -----------------------------------------------
   let totalTaxableAmount = 0;
   let totalTaxAmount = 0;
@@ -73,6 +107,18 @@ export function validateBusinessRules(invoice: Invoice): ValidationIssue[] {
         code: "VAT_EXEMPTION_REASON_REQUIRED",
         severity: "error",
         message: `${path}: BT-120/BT-121 exemption reason (text or code) is required for VAT category '${vb.categoryCode}'.`,
+        path,
+      });
+    }
+
+    // BR-Z-10 (and the same for 'S'): a standard-rated or zero-rated breakdown must
+    // not carry an exemption reason at all — exemption reasons only apply to
+    // categories where the supply is actually exempt/out-of-scope/reverse-charged.
+    if ((vb.categoryCode === "S" || vb.categoryCode === "Z") && (vb.exemptionReason || vb.exemptionReasonCode)) {
+      issues.push({
+        code: "VAT_EXEMPTION_REASON_NOT_ALLOWED",
+        severity: "error",
+        message: `${path}: BT-120/BT-121 exemption reason (text or code) must not be present for VAT category '${vb.categoryCode}'.`,
         path,
       });
     }
@@ -164,6 +210,19 @@ export function validateBusinessRules(invoice: Invoice): ValidationIssue[] {
       severity: "error",
       message: `duePayableAmount: BT-115 amount ${invoice.duePayableAmount} does not match taxInclusiveAmount (${invoice.taxInclusiveAmount}).`,
       path: "duePayableAmount",
+    });
+  }
+
+  // --- Place of supply (informational only — never blocks XML generation) ------------------
+  // The schema doesn't distinguish goods from services, so this can't be resolved
+  // automatically; flag cross-border invoices so the place of supply can be verified by hand.
+  if (invoice.seller.address.countryCode !== invoice.buyer.address.countryCode) {
+    const placeOfSupplyIfB2BService = resolvePlaceOfSupply(invoice.seller, invoice.buyer, true);
+    issues.push({
+      code: "PLACE_OF_SUPPLY_CROSS_BORDER",
+      severity: "warning",
+      message: `Seller (${invoice.seller.address.countryCode}) and buyer (${invoice.buyer.address.countryCode}) are in different countries. Place of supply defaults to the seller's country for goods, but to the buyer's country (${placeOfSupplyIfB2BService}) for B2B services — verify manually which applies.`,
+      path: "buyer.address.countryCode",
     });
   }
 

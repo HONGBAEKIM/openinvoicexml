@@ -9,6 +9,11 @@ import reducedRate from "../fixtures/reduced-rate.invoice.json" with { type: "js
 import exempt from "../fixtures/exempt.invoice.json" with { type: "json" };
 import zeroRated from "../fixtures/zero-rated.invoice.json" with { type: "json" };
 import reverseCharge from "../fixtures/reverse-charge.invoice.json" with { type: "json" };
+import smallBusiness from "../fixtures/small-business.invoice.json" with { type: "json" };
+import intraEuSupply from "../fixtures/intra-eu-supply.invoice.json" with { type: "json" };
+import exportInvoice from "../fixtures/export.invoice.json" with { type: "json" };
+import reverseChargeConstruction from "../fixtures/reverse-charge-construction.invoice.json" with { type: "json" };
+import reverseChargeScrapMetal from "../fixtures/reverse-charge-scrap-metal.invoice.json" with { type: "json" };
 
 const fixtures: [string, unknown][] = [
   ["domestic-simple", domesticSimple],
@@ -17,6 +22,11 @@ const fixtures: [string, unknown][] = [
   ["exempt", exempt],
   ["zero-rated", zeroRated],
   ["reverse-charge", reverseCharge],
+  ["small-business", smallBusiness],
+  ["intra-eu-supply", intraEuSupply],
+  ["export", exportInvoice],
+  ["reverse-charge-construction", reverseChargeConstruction],
+  ["reverse-charge-scrap-metal", reverseChargeScrapMetal],
 ];
 
 describe("toXRechnung", () => {
@@ -87,6 +97,35 @@ describe("toXRechnung", () => {
       expect(xml).toContain(
         `<cbc:ElectronicMail>${invoice.seller.contact!.email}</cbc:ElectronicMail>`,
       );
+    });
+  });
+
+  describe("field-specific mapping (intra-eu-supply)", () => {
+    const xml = toXRechnung(intraEuSupply as unknown as Invoice);
+
+    it("renders the nested delivery.deliverTo address as a flat cac:DeliveryLocation", () => {
+      const start = xml.indexOf("<cac:Delivery>");
+      const end = xml.indexOf("</cac:Delivery>") + "</cac:Delivery>".length;
+      const delivery = xml.slice(start, end);
+
+      expect(delivery).toContain("<cbc:ActualDeliveryDate>2026-07-14</cbc:ActualDeliveryDate>");
+      expect(delivery).toContain("<cbc:CityName>Paris</cbc:CityName>");
+      expect(delivery).toContain("<cbc:PostalZone>75001</cbc:PostalZone>");
+      expect(delivery).toContain("<cbc:IdentificationCode>FR</cbc:IdentificationCode>");
+    });
+  });
+
+  describe("VAT category 'O' (outside the scope of VAT)", () => {
+    it("omits the line-level VAT Percent element (BR-O-05)", () => {
+      const invoice = { ...(domesticSimple as unknown as Invoice) };
+      invoice.lines = [{ ...invoice.lines[0]!, vatCategoryCode: "O", vatRate: 0 }];
+      const xml = toXRechnung(invoice);
+      const start = xml.indexOf("<cac:ClassifiedTaxCategory>");
+      const end = xml.indexOf("</cac:ClassifiedTaxCategory>") + "</cac:ClassifiedTaxCategory>".length;
+      const classifiedTaxCategory = xml.slice(start, end);
+
+      expect(classifiedTaxCategory).toContain("<cbc:ID>O</cbc:ID>");
+      expect(classifiedTaxCategory).not.toContain("<cbc:Percent>");
     });
   });
 

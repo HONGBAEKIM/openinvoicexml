@@ -20,6 +20,15 @@ import reducedRate from "../fixtures/reduced-rate.invoice.json" with { type: "js
 import exempt from "../fixtures/exempt.invoice.json" with { type: "json" };
 import zeroRated from "../fixtures/zero-rated.invoice.json" with { type: "json" };
 import reverseCharge from "../fixtures/reverse-charge.invoice.json" with { type: "json" };
+import smallBusiness from "../fixtures/small-business.invoice.json" with { type: "json" };
+import intraEuSupply from "../fixtures/intra-eu-supply.invoice.json" with { type: "json" };
+import exportInvoice from "../fixtures/export.invoice.json" with { type: "json" };
+import reverseChargeConstruction from "../fixtures/reverse-charge-construction.invoice.json" with { type: "json" };
+import reverseChargeScrapMetal from "../fixtures/reverse-charge-scrap-metal.invoice.json" with { type: "json" };
+import reverseChargeSecurityTransfer from "../fixtures/reverse-charge-security-transfer.invoice.json" with { type: "json" };
+import reverseChargeCleaning from "../fixtures/reverse-charge-cleaning.invoice.json" with { type: "json" };
+import reverseChargeMobileDevices from "../fixtures/reverse-charge-mobile-devices.invoice.json" with { type: "json" };
+import reverseChargeGasAndElectricity from "../fixtures/reverse-charge-gas-and-electricity.invoice.json" with { type: "json" };
 
 const fixtures: [string, unknown][] = [
   ["domestic-simple", domesticSimple],
@@ -28,6 +37,15 @@ const fixtures: [string, unknown][] = [
   ["exempt", exempt],
   ["zero-rated", zeroRated],
   ["reverse-charge", reverseCharge],
+  ["small-business", smallBusiness],
+  ["intra-eu-supply", intraEuSupply],
+  ["export", exportInvoice],
+  ["reverse-charge-construction", reverseChargeConstruction],
+  ["reverse-charge-scrap-metal", reverseChargeScrapMetal],
+  ["reverse-charge-security-transfer", reverseChargeSecurityTransfer],
+  ["reverse-charge-cleaning", reverseChargeCleaning],
+  ["reverse-charge-mobile-devices", reverseChargeMobileDevices],
+  ["reverse-charge-gas-and-electricity", reverseChargeGasAndElectricity],
 ];
 
 const JAVA_BIN = existsSync("tools/jre/bin/java") ? "tools/jre/bin/java" : "java";

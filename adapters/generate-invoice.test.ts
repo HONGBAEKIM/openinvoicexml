@@ -9,6 +9,11 @@ import reducedRate from "../fixtures/reduced-rate.invoice.json" with { type: "js
 import exempt from "../fixtures/exempt.invoice.json" with { type: "json" };
 import zeroRated from "../fixtures/zero-rated.invoice.json" with { type: "json" };
 import reverseCharge from "../fixtures/reverse-charge.invoice.json" with { type: "json" };
+import smallBusiness from "../fixtures/small-business.invoice.json" with { type: "json" };
+import intraEuSupply from "../fixtures/intra-eu-supply.invoice.json" with { type: "json" };
+import exportInvoice from "../fixtures/export.invoice.json" with { type: "json" };
+import reverseChargeConstruction from "../fixtures/reverse-charge-construction.invoice.json" with { type: "json" };
+import reverseChargeScrapMetal from "../fixtures/reverse-charge-scrap-metal.invoice.json" with { type: "json" };
 
 const fixtures: [string, unknown][] = [
   ["domestic-simple", domesticSimple],
@@ -17,6 +22,11 @@ const fixtures: [string, unknown][] = [
   ["exempt", exempt],
   ["zero-rated", zeroRated],
   ["reverse-charge", reverseCharge],
+  ["small-business", smallBusiness],
+  ["intra-eu-supply", intraEuSupply],
+  ["export", exportInvoice],
+  ["reverse-charge-construction", reverseChargeConstruction],
+  ["reverse-charge-scrap-metal", reverseChargeScrapMetal],
 ];
 
 /** Deep-clones a fixture so mutations in one test don't leak into others. */
@@ -26,10 +36,10 @@ function clone<T>(fixture: T): T {
 
 describe("generateInvoice", () => {
   describe.each(fixtures)("valid fixtures (%s)", (_label, fixture) => {
-    it("generates XML with no issues", () => {
+    it("generates XML with no error-severity issues", () => {
       const result = generateInvoice(fixture as Invoice);
 
-      expect(result.issues).toEqual([]);
+      expect(result.issues.filter((issue) => issue.severity === "error")).toEqual([]);
       expect(result.xml).not.toBeNull();
       expect(result.xml!.startsWith('<?xml version="1.0" encoding="UTF-8"?>')).toBe(true);
     });

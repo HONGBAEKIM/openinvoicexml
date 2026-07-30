@@ -2,6 +2,12 @@ import type { VatCategoryCode } from "../../core/types/vat-breakdown.js";
 import type { ValidationIssue } from "../types.js";
 import { isClose, round2 } from "../../core/utils/monetary.js";
 
+/**
+ * Checks BT-118/BT-119 (VAT rate) and BT-120/BT-121 (exemption reason presence) rules.
+ *
+ * @see ../../docs/COMPLIANCE.md for the EN 16931 source of these BT-* rules.
+ */
+
 /** Categories that must carry a zero VAT rate (no VAT charged on the invoice). */
 export const ZERO_RATE_CATEGORIES: VatCategoryCode[] = ["Z", "E", "AE", "K", "G", "O"];
 
