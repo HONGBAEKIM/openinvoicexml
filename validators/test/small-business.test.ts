@@ -10,6 +10,16 @@ function clone<T>(fixture: T): T {
   return JSON.parse(JSON.stringify(fixture)) as T;
 }
 
+/**
+ * What's tested here (§19 UStG — Kleinunternehmerregelung, VAT category 'E'):
+ *
+ * | Test case                                                     | Expected result                 |
+ * |------------------------------------------------------------------|-------------------------------------|
+ * | §19 exemption, seller has neither taxRegistrationId nor vatId    | SMALL_BUSINESS_TAX_ID_REQUIRED     |
+ * | §19 exemption, seller has a vatId (no taxRegistrationId)         | no issue                           |
+ * | §19 exemption, seller has a taxRegistrationId (no vatId)         | no issue                           |
+ * | Category E, but reason doesn't mention §19 (e.g. §4 Nr. 14)      | no issue — not a §19 case          |
+ */
 describe("checkSmallBusinessRequirements", () => {
   // E + §19 reason → taxRegistrationId or vatId required
   it("flags a §19 invoice whose seller has neither taxRegistrationId nor vatId", () => {

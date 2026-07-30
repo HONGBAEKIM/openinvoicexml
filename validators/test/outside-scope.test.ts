@@ -10,6 +10,15 @@ function clone<T>(fixture: T): T {
   return JSON.parse(JSON.stringify(fixture)) as T;
 }
 
+/**
+ * What's tested here (BR-O-02 — VAT category 'O', outside the scope of VAT):
+ *
+ * | Test case                                          | Expected result                 |
+ * |------------------------------------------------------|------------------------------------|
+ * | Category O, seller has a VAT ID                      | OUTSIDE_SCOPE_VAT_ID_FORBIDDEN     |
+ * | Category O, buyer has a VAT ID (seller doesn't)      | OUTSIDE_SCOPE_VAT_ID_FORBIDDEN     |
+ * | Category O, neither party has a VAT ID               | no issue                           |
+ */
 describe("checkOutsideScopeRequirements", () => {
   // This transaction is outside the VAT system, so VAT identification must not be used for this invoice.
   it("flags an outside-scope (O) invoice where the seller's VAT ID is present (BR-O-02)", () => {

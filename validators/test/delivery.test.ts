@@ -10,6 +10,17 @@ function clone<T>(fixture: T): T {
   return JSON.parse(JSON.stringify(fixture)) as T;
 }
 
+/**
+ * What's tested here (BR-57 — deliver-to country code, any VAT category):
+ *
+ * | Test case                                                  | Expected result                       |
+ * |-------------------------------------------------------------|------------------------------------------|
+ * | deliverTo given, no countryCode                             | DELIVERY_COUNTRY_REQUIRED                |
+ * | No delivery info at all                                      | no issue — BR-57 doesn't apply           |
+ * | deliverTo given, city missing (countryCode present)          | no issue — city isn't required           |
+ * | deliverTo given, postalCode missing (countryCode present)    | no issue — postal code isn't required    |
+ * | deliverTo given (K fixture), countryCode missing             | DELIVERY_COUNTRY_REQUIRED                |
+ */
 describe("checkDeliveryAddressRequirements", () => {
   it("requires countryCode whenever deliverTo is supplied, regardless of VAT category (BR-57)", () => {
     const issues: ValidationIssue[] = [];
