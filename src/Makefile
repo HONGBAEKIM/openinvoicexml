@@ -80,6 +80,6 @@ db:
 	docker exec -it src-postgres-1 sh
 
 # Same as above but skips the intermediate shell — drops straight into psql.
-db-psql:
+db-sql:
 	docker exec -it src-postgres-1 psql -U app -d app
 
