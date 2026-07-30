@@ -1,0 +1,80 @@
+{
+  "id": "RE-2026-0057",
+  "typeCode": "380",
+  "issueDate": "2026-07-20",
+  "dueDate": "2026-08-19",
+  "currencyCode": "EUR",
+  "businessProcessType": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+  "buyerReference": "04011000-12345-03",
+
+  "seller": {
+    "name": "Gebäudereinigung Sauber GmbH",
+    "vatId": "DE123456789",
+    "address": {
+      "line1": "Reinigungsweg 8",
+      "city": "Berlin",
+      "postalCode": "10117",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "rechnung@sauber-gebaeudereinigung.example",
+    "electronicAddressSchemeId": "EM",
+    "contact": {
+      "name": "Buchhaltung",
+      "telephone": "+49 30 1234567",
+      "email": "buchhaltung@sauber-gebaeudereinigung.example"
+    }
+  },
+
+  "buyer": {
+    "name": "Acme GmbH",
+    "vatId": "DE987654321",
+    "address": {
+      "line1": "Marienplatz 1",
+      "city": "München",
+      "postalCode": "80331",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "einkauf@acme.example",
+    "electronicAddressSchemeId": "EM"
+  },
+
+  "lines": [
+    {
+      "id": "1",
+      "name": "Gebäudereinigungsleistungen (Unterhaltsreinigung)",
+      "description": "Unterhaltsreinigung von Büroflächen gem. §13b Abs. 2 Nr. 8 UStG (Reverse-Charge)",
+      "quantity": 1,
+      "unitCode": "C62",
+      "unitPrice": 1200.0,
+      "lineAmount": 1200.0,
+      "vatCategoryCode": "AE",
+      "vatRate": 0
+    }
+  ],
+
+  "vatBreakdowns": [
+    {
+      "categoryCode": "AE",
+      "rate": 0,
+      "taxableAmount": 1200.0,
+      "taxAmount": 0.0,
+      "exemptionReason": "Steuerschuldnerschaft des Leistungsempfängers für Gebäudereinigungsleistungen gem. §13b UStG",
+      "exemptionReasonCode": "VATEX-EU-AE",
+      "reverseChargeReason": "cleaning"
+    }
+  ],
+
+  "taxExclusiveAmount": 1200.0,
+  "taxAmount": 0.0,
+  "taxInclusiveAmount": 1200.0,
+  "duePayableAmount": 1200.0,
+
+  "paymentMeans": {
+    "code": "58",
+    "iban": "DE89370400440532013000",
+    "accountName": "Gebäudereinigung Sauber GmbH",
+    "bic": "COBADEFFXXX"
+  },
+
+  "note": "Steuerschuldnerschaft des Leistungsempfängers (§13b UStG, Gebäudereinigung)."
+}

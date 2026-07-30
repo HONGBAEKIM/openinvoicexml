@@ -1,0 +1,80 @@
+{
+  "id": "RE-2026-0059",
+  "typeCode": "380",
+  "issueDate": "2026-07-22",
+  "dueDate": "2026-08-21",
+  "currencyCode": "EUR",
+  "businessProcessType": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+  "buyerReference": "04011000-12345-03",
+
+  "seller": {
+    "name": "Energiehandel Nord GmbH",
+    "vatId": "DE123456789",
+    "address": {
+      "line1": "Netzstraße 22",
+      "city": "Hamburg",
+      "postalCode": "20095",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "rechnung@energiehandel-nord.example",
+    "electronicAddressSchemeId": "EM",
+    "contact": {
+      "name": "Buchhaltung",
+      "telephone": "+49 40 1234567",
+      "email": "buchhaltung@energiehandel-nord.example"
+    }
+  },
+
+  "buyer": {
+    "name": "Acme GmbH",
+    "vatId": "DE987654321",
+    "address": {
+      "line1": "Marienplatz 1",
+      "city": "München",
+      "postalCode": "80331",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "einkauf@acme.example",
+    "electronicAddressSchemeId": "EM"
+  },
+
+  "lines": [
+    {
+      "id": "1",
+      "name": "Erdgaslieferung über das Erdgasnetz",
+      "description": "Lieferung von Erdgas über das Erdgasnetz an einen Wiederverkäufer gem. §13b Abs. 2 Nr. 5 UStG (Reverse-Charge)",
+      "quantity": 50000,
+      "unitCode": "KWH",
+      "unitPrice": 0.05,
+      "lineAmount": 2500.0,
+      "vatCategoryCode": "AE",
+      "vatRate": 0
+    }
+  ],
+
+  "vatBreakdowns": [
+    {
+      "categoryCode": "AE",
+      "rate": 0,
+      "taxableAmount": 2500.0,
+      "taxAmount": 0.0,
+      "exemptionReason": "Steuerschuldnerschaft des Leistungsempfängers für Erdgaslieferungen über das Erdgasnetz gem. §13b UStG",
+      "exemptionReasonCode": "VATEX-EU-AE",
+      "reverseChargeReason": "gas-and-electricity"
+    }
+  ],
+
+  "taxExclusiveAmount": 2500.0,
+  "taxAmount": 0.0,
+  "taxInclusiveAmount": 2500.0,
+  "duePayableAmount": 2500.0,
+
+  "paymentMeans": {
+    "code": "58",
+    "iban": "DE89370400440532013000",
+    "accountName": "Energiehandel Nord GmbH",
+    "bic": "COBADEFFXXX"
+  },
+
+  "note": "Steuerschuldnerschaft des Leistungsempfängers (§13b UStG, Erdgaslieferung)."
+}

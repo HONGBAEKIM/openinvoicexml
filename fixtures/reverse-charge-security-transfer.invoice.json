@@ -1,0 +1,80 @@
+{
+  "id": "RE-2026-0056",
+  "typeCode": "380",
+  "issueDate": "2026-07-19",
+  "dueDate": "2026-08-18",
+  "currencyCode": "EUR",
+  "businessProcessType": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+  "buyerReference": "04011000-12345-03",
+
+  "seller": {
+    "name": "Sicherheiten Verwertung Nord GmbH",
+    "vatId": "DE123456789",
+    "address": {
+      "line1": "Verwertungsweg 3",
+      "city": "Berlin",
+      "postalCode": "10117",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "rechnung@sicherheiten-verwertung.example",
+    "electronicAddressSchemeId": "EM",
+    "contact": {
+      "name": "Buchhaltung",
+      "telephone": "+49 30 1234567",
+      "email": "buchhaltung@sicherheiten-verwertung.example"
+    }
+  },
+
+  "buyer": {
+    "name": "Acme GmbH",
+    "vatId": "DE987654321",
+    "address": {
+      "line1": "Marienplatz 1",
+      "city": "München",
+      "postalCode": "80331",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "einkauf@acme.example",
+    "electronicAddressSchemeId": "EM"
+  },
+
+  "lines": [
+    {
+      "id": "1",
+      "name": "Lieferung sicherungsübereigneter Produktionsmaschinen",
+      "description": "Lieferung von zur Sicherheit übereigneten Maschinen im Rahmen der Verwertung außerhalb des Insolvenzverfahrens gem. §13b Abs. 2 Nr. 2 UStG (Reverse-Charge)",
+      "quantity": 1,
+      "unitCode": "C62",
+      "unitPrice": 8500.0,
+      "lineAmount": 8500.0,
+      "vatCategoryCode": "AE",
+      "vatRate": 0
+    }
+  ],
+
+  "vatBreakdowns": [
+    {
+      "categoryCode": "AE",
+      "rate": 0,
+      "taxableAmount": 8500.0,
+      "taxAmount": 0.0,
+      "exemptionReason": "Steuerschuldnerschaft des Leistungsempfängers für die Lieferung sicherungsübereigneter Gegenstände gem. §13b UStG",
+      "exemptionReasonCode": "VATEX-EU-AE",
+      "reverseChargeReason": "security-transfer"
+    }
+  ],
+
+  "taxExclusiveAmount": 8500.0,
+  "taxAmount": 0.0,
+  "taxInclusiveAmount": 8500.0,
+  "duePayableAmount": 8500.0,
+
+  "paymentMeans": {
+    "code": "58",
+    "iban": "DE89370400440532013000",
+    "accountName": "Sicherheiten Verwertung Nord GmbH",
+    "bic": "COBADEFFXXX"
+  },
+
+  "note": "Steuerschuldnerschaft des Leistungsempfängers (§13b UStG, Sicherungsübereignung)."
+}
