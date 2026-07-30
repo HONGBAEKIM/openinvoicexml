@@ -62,6 +62,7 @@ and PR to `main`.
 | `ROADMAP.md` — Phase goals, non-goals, open questions                       | Done   |
 | `CONTRIBUTING.md` — How to contribute, coding conventions                   | Done   |
 | `LIMITATIONS.md` — What is not supported and why                            | Done   |
+| `COMPLIANCE.md` — Index of compliance sources; rule → file → status map     | Done   |
 | `PROTOTYPEFUND.md` — Prototype Fund bi-weekly progress report               | Active |
 | `DEPENDENCIES.md` — Purpose of each dependency in `package.json`            | Done   |
 | `TSCONFIG.md` — Explanation of each `tsconfig.json` compiler option         | Done   |
