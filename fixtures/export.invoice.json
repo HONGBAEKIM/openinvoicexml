@@ -1,0 +1,87 @@
+{
+  "id": "RE-2026-0053",
+  "typeCode": "380",
+  "issueDate": "2026-07-16",
+  "dueDate": "2026-08-15",
+  "currencyCode": "EUR",
+  "businessProcessType": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+  "buyerReference": "04011000-12345-03",
+
+  "seller": {
+    "name": "Max Mustermann GmbH",
+    "vatId": "DE123456789",
+    "address": {
+      "line1": "Unter den Linden 1",
+      "city": "Berlin",
+      "postalCode": "10117",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "rechnung@mustermann.example",
+    "electronicAddressSchemeId": "EM",
+    "contact": {
+      "name": "Buchhaltung",
+      "telephone": "+49 30 1234567",
+      "email": "buchhaltung@mustermann.example"
+    }
+  },
+
+  "buyer": {
+    "name": "Alpen Handels AG",
+    "address": {
+      "line1": "Bahnhofstrasse 20",
+      "city": "Zürich",
+      "postalCode": "8001",
+      "countryCode": "CH"
+    },
+    "electronicAddress": "einkauf@alpenhandels.example",
+    "electronicAddressSchemeId": "EM"
+  },
+
+  "lines": [
+    {
+      "id": "1",
+      "name": "Präzisionswerkzeuge",
+      "description": "Ausfuhrlieferung gem. §4 Nr. 1 Buchst. a UStG",
+      "quantity": 20,
+      "unitCode": "C62",
+      "unitPrice": 100.0,
+      "lineAmount": 2000.0,
+      "vatCategoryCode": "G",
+      "vatRate": 0
+    }
+  ],
+
+  "vatBreakdowns": [
+    {
+      "categoryCode": "G",
+      "rate": 0,
+      "taxableAmount": 2000.0,
+      "taxAmount": 0.0,
+      "exemptionReason": "Steuerfreie Ausfuhrlieferung gem. §4 Nr. 1 Buchst. a UStG",
+      "exemptionReasonCode": "VATEX-EU-G"
+    }
+  ],
+
+  "taxExclusiveAmount": 2000.0,
+  "taxAmount": 0.0,
+  "taxInclusiveAmount": 2000.0,
+  "duePayableAmount": 2000.0,
+
+  "delivery": {
+    "actualDeliveryDate": "2026-07-15",
+    "deliverTo": {
+      "city": "Zürich",
+      "postalCode": "8001",
+      "countryCode": "CH"
+    }
+  },
+
+  "paymentMeans": {
+    "code": "58",
+    "iban": "DE89370400440532013000",
+    "accountName": "Max Mustermann GmbH",
+    "bic": "COBADEFFXXX"
+  },
+
+  "note": "Steuerfreie Ausfuhrlieferung (§4 Nr. 1 Buchst. a UStG)."
+}

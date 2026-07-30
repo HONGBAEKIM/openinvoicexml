@@ -1,0 +1,88 @@
+{
+  "id": "RE-2026-0052",
+  "typeCode": "380",
+  "issueDate": "2026-07-15",
+  "dueDate": "2026-08-14",
+  "currencyCode": "EUR",
+  "businessProcessType": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+  "buyerReference": "04011000-12345-03",
+
+  "seller": {
+    "name": "Max Mustermann GmbH",
+    "vatId": "DE123456789",
+    "address": {
+      "line1": "Unter den Linden 1",
+      "city": "Berlin",
+      "postalCode": "10117",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "rechnung@mustermann.example",
+    "electronicAddressSchemeId": "EM",
+    "contact": {
+      "name": "Buchhaltung",
+      "telephone": "+49 30 1234567",
+      "email": "buchhaltung@mustermann.example"
+    }
+  },
+
+  "buyer": {
+    "name": "Lumiere SARL",
+    "vatId": "FR12345678901",
+    "address": {
+      "line1": "Rue de Rivoli 10",
+      "city": "Paris",
+      "postalCode": "75001",
+      "countryCode": "FR"
+    },
+    "electronicAddress": "compta@lumiere.example",
+    "electronicAddressSchemeId": "EM"
+  },
+
+  "lines": [
+    {
+      "id": "1",
+      "name": "Büromöbel-Lieferung",
+      "description": "Innergemeinschaftliche Lieferung gem. §6a UStG",
+      "quantity": 10,
+      "unitCode": "C62",
+      "unitPrice": 150.0,
+      "lineAmount": 1500.0,
+      "vatCategoryCode": "K",
+      "vatRate": 0
+    }
+  ],
+
+  "vatBreakdowns": [
+    {
+      "categoryCode": "K",
+      "rate": 0,
+      "taxableAmount": 1500.0,
+      "taxAmount": 0.0,
+      "exemptionReason": "Steuerfreie innergemeinschaftliche Lieferung gem. §6a UStG",
+      "exemptionReasonCode": "VATEX-EU-IC"
+    }
+  ],
+
+  "taxExclusiveAmount": 1500.0,
+  "taxAmount": 0.0,
+  "taxInclusiveAmount": 1500.0,
+  "duePayableAmount": 1500.0,
+
+  "delivery": {
+    "actualDeliveryDate": "2026-07-14",
+    "deliverTo": {
+      "city": "Paris",
+      "postalCode": "75001",
+      "countryCode": "FR"
+    }
+  },
+
+  "paymentMeans": {
+    "code": "58",
+    "iban": "DE89370400440532013000",
+    "accountName": "Max Mustermann GmbH",
+    "bic": "COBADEFFXXX"
+  },
+
+  "note": "Steuerfreie innergemeinschaftliche Lieferung (§6a UStG)."
+}
