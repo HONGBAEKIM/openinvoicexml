@@ -57,7 +57,7 @@
     },
     "buyer": {
       "$ref": "#/$defs/Party",
-      "description": "BG-7: Buyer (invoiced party). Required by §14 Abs. 4 Nr. 2 UStG."
+      "description": "BG-7: Buyer (invoiced party). Required by §14 Abs. 4 Nr. 1 UStG (full name and address of both supplier and recipient)."
     },
     "lines": {
       "type": "array",
@@ -200,7 +200,7 @@
         "vatId": {
           "type": "string",
           "pattern": "^[A-Z]{2}[0-9A-Z]{2,13}$",
-          "description": "BT-31 / BT-48: VAT registration number (Umsatzsteuer-Identifikationsnummer). Required by §14 Abs. 4 Nr. 2 UStG when applicable. German numbers start with DE."
+          "description": "BT-31 / BT-48: VAT registration number (Umsatzsteuer-Identifikationsnummer). For the seller, required by §14 Abs. 4 Nr. 2 UStG when applicable. For the buyer, conditionally required by EN 16931 (e.g. BR-IC-02 for intra-EU supply, BR-AE-02 for reverse charge) rather than by Nr. 2, which concerns the seller's own tax number/VAT ID. German numbers start with DE."
         },
         "taxRegistrationId": {
           "type": "string",
@@ -315,7 +315,7 @@
         },
         "unitPrice": {
           "type": "number",
-          "description": "BT-146: Item net price per unit (before line-level discounts). Required by §14 Abs. 4 Nr. 6 UStG."
+          "description": "BT-146: Item net price per unit (before line-level discounts)."
         },
         "lineAmount": {
           "type": "number",
@@ -330,7 +330,7 @@
           "type": "number",
           "minimum": 0,
           "maximum": 100,
-          "description": "BT-152: VAT rate as a percentage (e.g. 19, 7, 0). Required by §14 Abs. 4 Nr. 7 UStG."
+          "description": "BT-152: VAT rate as a percentage (e.g. 19, 7, 0). Required by §14 Abs. 4 Nr. 8 UStG."
         }
       }
     },
