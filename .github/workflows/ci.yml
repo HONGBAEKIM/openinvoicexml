@@ -28,8 +28,8 @@ jobs:
       # Downloads the KoSIT validator jar + XRechnung scenario config (and a portable
       # JRE if java isn't already on the runner) into tools/ — same script used locally
       # via `make kosit-setup`. This makes the KoSIT-backed fixture regression in
-      # validators/kosit.test.ts (run as part of `npm test` below) an actual CI gate,
-      # not something that silently skips (validators/kosit.test.ts's
+      # validators/test/kosit.test.ts (run as part of `npm test` below) an actual CI gate,
+      # not something that silently skips (validators/test/kosit.test.ts's
       # describe.skipIf(!available) would otherwise let a missing jar/Java pass silently).
       - run: bash scripts/setup-kosit.sh
 

@@ -72,9 +72,9 @@ Fixtures are example invoices in `fixtures/`. Each one represents a distinct leg
 
 1. **Create the JSON file** at `fixtures/<name>.invoice.json`. It must validate against `schemas/invoice.schema.json`.
 
-2. **Add it to the schema test** in `validators/invoice-schema.test.ts` — import the fixture and add it to the valid-fixture test array.
+2. **Add it to the schema test** in `validators/test/invoice-schema.test.ts` — import the fixture and add it to the valid-fixture test array.
 
-3. **Add it to the business rules test** in `validators/business-rules.test.ts` — import the fixture and add it to the valid-fixture array so `validateBusinessRules()` confirms it produces no issues.
+3. **Add it to the business rules test** in `validators/test/business-rules.test.ts` — import the fixture and add it to the valid-fixture array so `validateBusinessRules()` confirms it produces no issues.
 
 4. **Run the tests** to confirm everything passes:
 

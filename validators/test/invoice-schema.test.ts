@@ -5,9 +5,9 @@ import { Ajv } from "ajv";
 // Loads the three Json files as plain Javascript objects at import time.
 // with { type: "json" } tells Node.js and TypeScript "this is JSON data, not executable code".
 // After this, schema, simpleFixture, and multiLineFixture are just plain objects in memory.
-import schema from "../schemas/invoice.schema.json" with { type: "json" };
-import simpleFixture from "../fixtures/domestic-simple.invoice.json" with { type: "json" };
-import multiLineFixture from "../fixtures/domestic-multi-line.invoice.json" with { type: "json" };
+import schema from "../../schemas/invoice.schema.json" with { type: "json" };
+import simpleFixture from "../../fixtures/domestic-simple.invoice.json" with { type: "json" };
+import multiLineFixture from "../../fixtures/domestic-multi-line.invoice.json" with { type: "json" };
 // describe() → groups related tests together.
 // it() → runs one test.
 // expect() → checks if the result is correct.

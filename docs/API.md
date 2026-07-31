@@ -65,7 +65,7 @@ or KoSIT. Use this only when you validate separately (your own pipeline, or a di
 Structurally invalid input (wrong types, missing required TypeScript-typed fields) is a compile
 error, not a runtime one — `toXRechnung` does not separately guard against malformed runtime
 data (e.g. an unparsable date string); that is the JSON Schema validator's job (see
-`validators/invoice-schema.test.ts`) if your input arrives as untyped JSON.
+`validators/test/invoice-schema.test.ts`) if your input arrives as untyped JSON.
 
 ## `ValidationIssue` — error-code contract
 
