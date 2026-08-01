@@ -16,6 +16,7 @@ import reverseChargeConstruction from "../fixtures/10.reverse-charge-constructio
 import reverseChargeScrapMetal from "../fixtures/11.reverse-charge-scrap-metal.invoice.json" with { type: "json" };
 import creditNoteFull from "../fixtures/16.credit-note-full.invoice.json" with { type: "json" };
 import creditNotePartial from "../fixtures/17.credit-note-partial.invoice.json" with { type: "json" };
+import correctiveInvoice from "../fixtures/18.corrective-invoice.invoice.json" with { type: "json" };
 
 const fixtures: [string, unknown][] = [
   ["domestic-simple", domesticSimple],
@@ -31,6 +32,7 @@ const fixtures: [string, unknown][] = [
   ["reverse-charge-scrap-metal", reverseChargeScrapMetal],
   ["credit-note-full", creditNoteFull],
   ["credit-note-partial", creditNotePartial],
+  ["corrective-invoice", correctiveInvoice],
 ];
 
 /** Deep-clones a fixture so mutations in one test don't leak into others. */

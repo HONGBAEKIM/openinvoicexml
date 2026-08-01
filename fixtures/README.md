@@ -24,6 +24,7 @@ expected XRechnung XML output once Phase 2 is complete.
 | `15.reverse-charge-gas-and-electricity.invoice.json` | §13b subcase: gas/electricity (category AE) | Implemented |
 | `16.credit-note-full.invoice.json`    | Credit note (typeCode 381), full reversal          | Implemented |
 | `17.credit-note-partial.invoice.json` | Credit note (typeCode 381), partial line-item credit | Implemented |
+| `18.corrective-invoice.invoice.json`  | Corrective invoice (typeCode 384), partial line-item correction | Implemented |
 
 Note: fixtures can't carry inline comments — they're loaded via `import ... with { type: "json" }` and
 validated against `schemas/invoice.schema.json`, which sets `"additionalProperties": false` at every level,
@@ -74,3 +75,13 @@ so any extra `_comment`-style key would fail schema validation. Explanations liv
   `02.domestic-multi-line.invoice.json` (`RE-2026-0043`): only 2 of the original 3 lines are credited
   (negated), the third (consulting) stays untouched on the original invoice. Tests that VAT breakdown
   arithmetic checks work correctly against a subset of lines, not just a full reversal.
+- **`18.corrective-invoice.invoice.json`** — typeCode `384`, models a seller who already sent invoice
+  `RE-2026-0044` (2026-06-12) but forgot to bill 3 consulting hours, so they issue a *new* document,
+  `RE-2026-0045`, that only bills the missing hours (`precedingInvoiceReference` points back at
+  `RE-2026-0044`). Unlike `16`/`17`'s credit notes, a corrective invoice adds to what's owed rather
+  than reducing it, so `duePayableAmount` is positive (`446.25`) — `CREDIT_NOTE_POSITIVE_AMOUNT`
+  doesn't apply here since that check is `381`-only, but `PRECEDING_INVOICE_REFERENCE_REQUIRED` still
+  does, since both `381` and `384` must say what they reference (`validators/rules/10.credit-note.ts`).
+  As with `17`, only the amended line is present, not a full copy of the original invoice — that's a
+  fixture-authoring convention, not something the schema enforces, since the internal `Invoice` type
+  has no concept of "the original document" to diff against.

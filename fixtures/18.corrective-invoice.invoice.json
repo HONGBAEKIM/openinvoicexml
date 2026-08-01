@@ -1,0 +1,82 @@
+{
+  "id": "RE-2026-0045",
+  "typeCode": "384",
+  "issueDate": "2026-06-28",
+  "dueDate": "2026-07-28",
+  "currencyCode": "EUR",
+  "businessProcessType": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+  "buyerReference": "04011000-12345-03",
+
+  "precedingInvoiceReference": {
+    "id": "RE-2026-0044",
+    "issueDate": "2026-06-12"
+  },
+
+  "seller": {
+    "name": "Max Mustermann GmbH",
+    "vatId": "DE123456789",
+    "address": {
+      "line1": "Unter den Linden 1",
+      "city": "Berlin",
+      "postalCode": "10117",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "rechnung@mustermann.example",
+    "electronicAddressSchemeId": "EM",
+    "contact": {
+      "name": "Buchhaltung",
+      "telephone": "+49 30 1234567",
+      "email": "buchhaltung@mustermann.example"
+    }
+  },
+
+  "buyer": {
+    "name": "Acme GmbH",
+    "vatId": "DE987654321",
+    "address": {
+      "line1": "Marienplatz 1",
+      "city": "München",
+      "postalCode": "80331",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "einkauf@acme.example",
+    "electronicAddressSchemeId": "EM"
+  },
+
+  "lines": [
+    {
+      "id": "1",
+      "name": "TypeScript Consulting",
+      "description": "Correction to invoice RE-2026-0044: 3 additional consulting hours mistakenly omitted from the original line item",
+      "quantity": 3,
+      "unitCode": "HUR",
+      "unitPrice": 125.0,
+      "lineAmount": 375.0,
+      "vatCategoryCode": "S",
+      "vatRate": 19
+    }
+  ],
+
+  "vatBreakdowns": [
+    {
+      "categoryCode": "S",
+      "rate": 19,
+      "taxableAmount": 375.0,
+      "taxAmount": 71.25
+    }
+  ],
+
+  "taxExclusiveAmount": 375.0,
+  "taxAmount": 71.25,
+  "taxInclusiveAmount": 446.25,
+  "duePayableAmount": 446.25,
+
+  "paymentMeans": {
+    "code": "58",
+    "iban": "DE89370400440532013000",
+    "accountName": "Max Mustermann GmbH",
+    "bic": "COBADEFFXXX"
+  },
+
+  "note": "Berichtigungsrechnung zu Rechnung RE-2026-0044 vom 12.06.2026: 3 zusätzliche Beratungsstunden, die in der ursprünglichen Rechnung versehentlich nicht abgerechnet wurden. Alle übrigen Positionen der Originalrechnung bleiben unverändert bestehen."
+}
