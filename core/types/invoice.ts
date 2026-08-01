@@ -11,7 +11,7 @@ export type InvoiceTypeCode =
 /**
  * Internal invoice schema — the single source of truth for all output adapters.
  * Every field maps to one or more XRechnung Business Terms (BT/BG).
- * See SCHEMA.md for the full BT mapping table.
+ * See DATA-MODEL.md for the full BT mapping table.
  */
 export interface Invoice {
   /** BT-1: Invoice number — unique identifier assigned by the seller. */

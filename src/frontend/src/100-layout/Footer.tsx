@@ -30,7 +30,7 @@ export function Footer(): JSX.Element {
             <li>
               <a
                 className="text-text-muted no-underline hover:underline"
-                href="https://github.com/HONGBAEKIM/openinvoicexml/blob/main/LICENSE"
+                href="https://github.com/HongbaeKim/openinvoicexml/blob/main/LICENSE"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -40,7 +40,7 @@ export function Footer(): JSX.Element {
             <li>
               <a
                 className="text-text-muted no-underline hover:underline"
-                href="https://github.com/HONGBAEKIM/openinvoicexml"
+                href="https://github.com/HongbaeKim/openinvoicexml"
                 target="_blank"
                 rel="noopener noreferrer"
               >

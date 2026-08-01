@@ -55,7 +55,7 @@ export function runKosit(xmlPaths: string[], options: KositOptions = {}): KositR
 
   if (!existsSync(jarPath) || !existsSync(scenariosPath)) {
     throw new Error(
-      `KoSIT jar/config not found at ${jarPath} / ${scenariosPath}. Run \`make kosit-setup\` first — see docs/VALIDATION.md.`,
+      `KoSIT jar/config not found at ${jarPath} / ${scenariosPath}. Run \`make kosit-setup\` first — see docs/COMPLIANCE.md.`,
     );
   }
 
@@ -82,7 +82,7 @@ export function runKosit(xmlPaths: string[], options: KositOptions = {}): KositR
       throw new Error(
         "KoSIT validation requires a `java` binary (or a portable JRE at tools/jre/bin/java) " +
           "and the KoSIT jar/config under tools/kosit/. Run `make kosit-setup` first — " +
-          "see docs/VALIDATION.md.",
+          "see docs/COMPLIANCE.md.",
       );
     }
     // Usually

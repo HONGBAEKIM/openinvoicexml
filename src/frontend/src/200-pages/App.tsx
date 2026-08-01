@@ -54,7 +54,7 @@ export function App(): JSX.Element {
             </a>
             <a
               className="text-text-muted no-underline hover:underline"
-              href="https://github.com/HONGBAEKIM/openinvoicexml"
+              href="https://github.com/HongbaeKim/openinvoicexml"
               target="_blank"
               rel="noopener noreferrer"
             >

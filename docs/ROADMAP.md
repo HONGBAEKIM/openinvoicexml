@@ -44,7 +44,7 @@ Detailed tasks:
 - Document the purpose of each field: which EU/German legal requirement it satisfies, and which XRechnung BT (Business Term) it maps to
 - Create 2 example invoice JSON files that validate against the schema: one simple domestic invoice, one with multiple line items
 - Write a schema validation test using a JSON Schema validator library — test must pass in CI
-- Add a `SCHEMA.md` file explaining the design decisions and field naming conventions
+- Add a `DATA-MODEL.md` file explaining the design decisions and field naming conventions
 
 > **Key design decision:** The internal schema is the single source of truth that decouples user input from output formats. Every downstream module (XML adapter, PDF adapter) reads only from this schema — never directly from raw user input.
 
@@ -63,7 +63,7 @@ Detailed tasks:
 - Create 3 additional example invoice JSON files covering: VAT-exempt invoice, invoice with discount, invoice referencing a contract
 - Write a normalization spec document describing how raw input is cleaned and normalized before validation (e.g. date formats, decimal precision, whitespace trimming)
 
-> **Legal context:** German invoices under UStG §14 must include specific VAT breakdowns. The VAT block structure here directly mirrors the XRechnung BG-23 (VAT breakdown) group, making XML mapping straightforward in Phase 2.
+> **Legal context:** German invoices under [§14 UStG][ustg-14] must include specific VAT breakdowns. The VAT block structure here directly mirrors the XRechnung BG-23 (VAT breakdown) group, making XML mapping straightforward in Phase 2.
 
 ### Week 4 (22 Jun – 28 Jun)
 
@@ -75,7 +75,7 @@ Detailed tasks:
 
 - Write `ARCHITECTURE.md`: describe the adapter pattern (input normalizer → internal schema → output adapter), module boundaries, data flow diagram, and rationale for key decisions
 - Write `ROADMAP.md`: describe all 5 phases with goals, non-goals, and open questions for community input
-- Write `CONTRIBUTING.md`: how to file issues, how to propose changes, code style requirements, how to run the test suite locally
+- Write `DEVELOPMENT.md`: how to file issues, how to propose changes, code style requirements, how to run the test suite locally
 - Add a `LIMITATIONS.md` noting what is NOT supported in v0.1.0 (no XML output yet, no PDF output yet, limited VAT scenarios)
 - Tag release v0.1.0 with a release note summarizing what is included
 
@@ -100,7 +100,7 @@ Detailed tasks:
 - Map all mandatory internal schema fields to their corresponding XRechnung Business Terms (BT-1 through BT-130 range for core fields)
 - Generate the first XML draft from one of the Week 2 example invoices and inspect it manually against the XRechnung specification PDF
 - Add XML generation as a new CI step: generate XML from all example fixtures, check output is well-formed XML
-- Document the BT mapping table in a `MAPPING.md` file for transparency and future reference
+- Document the BT mapping table in `DATA-MODEL.md` for transparency and future reference
 
 > **Technical note:** XRechnung supports both UBL 2.1 and UN/CEFACT CII syntax. UBL 2.1 is recommended as the primary target because it is more widely supported in German toolchains and has better library support.
 
@@ -152,7 +152,7 @@ Detailed tasks:
 - Write API usage documentation for the XML generation module (input format, output format, error codes)
 - Tag release v0.2.0 with a detailed changelog listing which XRechnung BTs are now supported and which are deferred to Phase 3
 
-> **Scope note:** v0.2.0 covers standard invoice scenarios. Complex legal scenarios (§19 small business, reverse charge subcases, intra-EU supplies, credit notes) are explicitly deferred to Phase 3 and documented as known limitations.
+> **Scope note:** v0.2.0 covers standard invoice scenarios. Complex legal scenarios ([§19][ustg-19] small business, reverse charge subcases, intra-EU supplies, credit notes) are explicitly deferred to Phase 3 and documented as known limitations.
 
 **Milestone: Compliant XRechnung generation validated locally.**
 
@@ -164,17 +164,17 @@ Detailed tasks:
 
 ### Week 9 (27 Jul – 2 Aug)
 
-- [ ] Implement §19 small business regulation, §13b reverse charge subcases, intra-EU supply/export, place-of-supply rules
+- [ ] Implement [§19][ustg-19] small business regulation, [§13b][ustg-13b] reverse charge subcases, intra-EU supply/export, place-of-supply rules
 
 Detailed tasks:
 
-- **§19 UStG (Kleinunternehmerregelung):** Implement logic for small business invoices where VAT is not charged. The invoice must include the correct exemption notice text, no VAT amount, and VAT category code O. Validate the mandatory legal notice is present in the XML.
-- **§13b UStG (reverse charge) subcases:** Implement the 5+ reverse-charge subcases — domestic construction services, security services, cleaning services, scrap metal, mobile phones/integrated circuits, gas/electricity via network. Each has distinct buyer VAT ID requirements and VAT exemption reason text.
+- **[§19 UStG][ustg-19] (Kleinunternehmerregelung):** Implement logic for small business invoices where VAT is not charged. The invoice must include the correct exemption notice text, no VAT amount, and VAT category code O. Validate the mandatory legal notice is present in the XML.
+- **[§13b UStG][ustg-13b] (reverse charge) subcases:** Implement the 5+ reverse-charge subcases — domestic construction services, security services, cleaning services, scrap metal, mobile phones/integrated circuits, gas/electricity via network. Each has distinct buyer VAT ID requirements and VAT exemption reason text.
 - **Intra-EU supply:** Implement zero-rated intra-EU goods supply (VAT category K) — seller and buyer must have valid EU VAT IDs, VAT exemption reason "intra-community supply" must be present in XML.
 - **Export outside EU:** Implement VAT category G (zero-rated export) — no VAT, correct exemption code, optional customs reference support.
 - **Place-of-supply rules:** Implement basic place-of-supply detection for services: default to seller country, override for B2B services to buyer country. Log a warning when place-of-supply affects VAT treatment so users can verify manually.
 
-> **Legal complexity:** §13b alone has 14 distinct subcases in German law, each with different triggering conditions. The implementation will cover the 5 most common ones affecting freelancers and micro-businesses; remaining subcases will be noted in `LIMITATIONS.md`.
+> **Legal complexity:** [§13b][ustg-13b] alone has 14 distinct subcases in German law, each with different triggering conditions. The implementation will cover the 5 most common ones affecting freelancers and micro-businesses; remaining subcases will be noted in `LIMITATIONS.md`.
 
 ### Week 10 (3 Aug – 9 Aug)
 
@@ -213,7 +213,7 @@ Detailed tasks:
 Detailed tasks:
 
 - Build a fixture library of 30+ legally distinct invoice scenarios, each with: a JSON input file, the expected XML output, KoSIT validation result, and a short description of which legal rule or scenario it tests
-- Fixture coverage must include: standard 19% VAT, 7% VAT, 0% VAT (export), VAT-exempt (§19), reverse-charge domestic, reverse-charge intra-EU, intra-EU supply, credit note (full), credit note (partial), corrective invoice, down payment invoice, final invoice with deduction, partial delivery invoice, invoice with discount, invoice with surcharge, invoice with multiple VAT rates on same document, invoice with payment in advance, invoice referencing a contract, invoice referencing a purchase order
+- Fixture coverage must include: standard 19% VAT, 7% VAT, 0% VAT (export), VAT-exempt ([§19][ustg-19]), reverse-charge domestic, reverse-charge intra-EU, intra-EU supply, credit note (full), credit note (partial), corrective invoice, down payment invoice, final invoice with deduction, partial delivery invoice, invoice with discount, invoice with surcharge, invoice with multiple VAT rates on same document, invoice with payment in advance, invoice referencing a contract, invoice referencing a purchase order
 - Run all 30+ fixtures through KoSIT validator in CI — all must pass with zero errors
 - Tag release v0.3.0 with complete fixture index in the release notes
 
@@ -399,9 +399,9 @@ Detailed tasks:
 
 Detailed tasks:
 
-- Finalize `CONTRIBUTING.md`: detailed guide for external contributors including how to add a new legal scenario (fixture + logic + test), how to update the BT mapping, and coding conventions
+- Finalize `DEVELOPMENT.md`: detailed guide for external contributors including how to add a new legal scenario (fixture + logic + test), how to update the BT mapping, and coding conventions
 - Refine local setup instructions: ensure a developer with no prior knowledge of XRechnung can go from `git clone` to running the full test suite in under 15 minutes
-- Write example usage documentation: at least 3 end-to-end code examples showing how to use the API to generate a standard invoice, a §19 small business invoice, and a hybrid PDF
+- Write example usage documentation: at least 3 end-to-end code examples showing how to use the API to generate a standard invoice, a [§19][ustg-19] small business invoice, and a hybrid PDF
 - Publish a FAQ section addressing the most likely questions from freelancer/small business users
 
 ### Week 25 (16 Nov – 22 Nov)
@@ -452,3 +452,7 @@ The beta program (`beta.html`) and developer feedback form (`developer.html`) co
 signups and integration interest ahead of Phase 6's production deployment. Publishing
 `openinvoicexml.de` itself doubles as a demand-validation step — traffic and signup volume are a
 lightweight signal for whether the hosted Second Stage service is worth the funded build-out.
+
+[ustg-13b]: https://www.gesetze-im-internet.de/ustg_1980/__13b.html
+[ustg-14]: https://www.gesetze-im-internet.de/ustg_1980/__14.html
+[ustg-19]: https://www.gesetze-im-internet.de/ustg_1980/__19.html
