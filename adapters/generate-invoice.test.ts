@@ -3,17 +3,19 @@ import { describe, it, expect } from "vitest";
 import { generateInvoice } from "./generate-invoice.js";
 import type { Invoice } from "../core/index.js";
 
-import domesticSimple from "../fixtures/domestic-simple.invoice.json" with { type: "json" };
-import domesticMultiLine from "../fixtures/domestic-multi-line.invoice.json" with { type: "json" };
-import reducedRate from "../fixtures/reduced-rate.invoice.json" with { type: "json" };
-import exempt from "../fixtures/exempt.invoice.json" with { type: "json" };
-import zeroRated from "../fixtures/zero-rated.invoice.json" with { type: "json" };
-import reverseCharge from "../fixtures/reverse-charge.invoice.json" with { type: "json" };
-import smallBusiness from "../fixtures/small-business.invoice.json" with { type: "json" };
-import intraEuSupply from "../fixtures/intra-eu-supply.invoice.json" with { type: "json" };
-import exportInvoice from "../fixtures/export.invoice.json" with { type: "json" };
-import reverseChargeConstruction from "../fixtures/reverse-charge-construction.invoice.json" with { type: "json" };
-import reverseChargeScrapMetal from "../fixtures/reverse-charge-scrap-metal.invoice.json" with { type: "json" };
+import domesticSimple from "../fixtures/01.domestic-simple.invoice.json" with { type: "json" };
+import domesticMultiLine from "../fixtures/02.domestic-multi-line.invoice.json" with { type: "json" };
+import reducedRate from "../fixtures/03.reduced-rate.invoice.json" with { type: "json" };
+import exempt from "../fixtures/04.exempt.invoice.json" with { type: "json" };
+import zeroRated from "../fixtures/05.zero-rated.invoice.json" with { type: "json" };
+import reverseCharge from "../fixtures/06.reverse-charge.invoice.json" with { type: "json" };
+import smallBusiness from "../fixtures/07.small-business.invoice.json" with { type: "json" };
+import intraEuSupply from "../fixtures/08.intra-eu-supply.invoice.json" with { type: "json" };
+import exportInvoice from "../fixtures/09.export.invoice.json" with { type: "json" };
+import reverseChargeConstruction from "../fixtures/10.reverse-charge-construction.invoice.json" with { type: "json" };
+import reverseChargeScrapMetal from "../fixtures/11.reverse-charge-scrap-metal.invoice.json" with { type: "json" };
+import creditNoteFull from "../fixtures/16.credit-note-full.invoice.json" with { type: "json" };
+import creditNotePartial from "../fixtures/17.credit-note-partial.invoice.json" with { type: "json" };
 
 const fixtures: [string, unknown][] = [
   ["domestic-simple", domesticSimple],
@@ -27,6 +29,8 @@ const fixtures: [string, unknown][] = [
   ["export", exportInvoice],
   ["reverse-charge-construction", reverseChargeConstruction],
   ["reverse-charge-scrap-metal", reverseChargeScrapMetal],
+  ["credit-note-full", creditNoteFull],
+  ["credit-note-partial", creditNotePartial],
 ];
 
 /** Deep-clones a fixture so mutations in one test don't leak into others. */

@@ -80,14 +80,15 @@ targeted"](#versions-currently-targeted) below.
 
 | Reference | Meaning | Implemented in | Status |
 |---|---|---|---|
-| `§13b UStG` (Abs. 1 + Abs. 2 Nr. 1–12) | Reverse-charge groups | `validators/rules/reverse-charge.ts` | Partial — checks that free-text wording matches the declared subcase; does not verify subcase legal preconditions (e.g. the mobile-devices/industrial-metals €5,000 threshold) |
-| `§19 UStG` | Kleinunternehmer tax exemption represented by this project using category `E` | `validators/rules/small-business.ts` | Partial — requires a seller tax ID once `§19 UStG` appears in the exemption reason; does not verify the underlying turnover conditions |
-| `VATEX-EU-G`, `§4 Nr. 1 Buchst. a UStG` (export) | Category `G` | `validators/rules/export.ts` | Implemented |
-| `VATEX-EU-IC`, `§6a UStG`, `BR-IC-11`, `BR-IC-12` | Intra-EU supply (category `K`) | `validators/rules/intra-eu.ts` | Implemented (BR-IC-11's BG-14 invoicing-period alternative to BT-72 is not supported). Also includes two checks beyond the formal EN 16931/XRechnung rules, as a §6a UStG plausibility safeguard: `INTRA_EU_SUPPLY_DELIVERY_COUNTRY_MATCHES_SELLER` (goods must leave the seller's own country) and `INTRA_EU_SUPPLY_SELLER_VAT_ID_INVALID_FORMAT`/`INTRA_EU_SUPPLY_BUYER_VAT_ID_INVALID_FORMAT` (per-country VAT ID format check, `core/utils/vat-id.ts` — pattern only, no checksum or VIES lookup) |
-| `BR-O-02` | Outside scope (category `O`) | `validators/rules/outside-scope.ts` | Implemented |
-| `BR-57` | Deliver-to country (BT-80) | `validators/rules/delivery.ts` | Implemented |
-| `BT-118`/`BT-119` VAT rate rules | Category ↔ rate consistency | `validators/rules/vat-rate.ts` | Implemented |
-| `BT-120`/`BT-121` exemption-reason presence | Exemption reason required/forbidden per category | `validators/rules/vat-rate.ts` (constant) + `validators/business-rules.ts` (enforcement) | Implemented |
+| `§13b UStG` (Abs. 1 + Abs. 2 Nr. 1–12) | Reverse-charge groups | `validators/rules/15.reverse-charge.ts` | Partial — checks that free-text wording matches the declared subcase; does not verify subcase legal preconditions (e.g. the mobile-devices/industrial-metals €5,000 threshold) |
+| `§19 UStG` | Kleinunternehmer tax exemption represented by this project using category `E` | `validators/rules/16.small-business.ts` | Partial — requires a seller tax ID once `§19 UStG` appears in the exemption reason; does not verify the underlying turnover conditions |
+| `VATEX-EU-G`, `§4 Nr. 1 Buchst. a UStG` (export) | Category `G` | `validators/rules/12.export.ts` | Implemented |
+| `VATEX-EU-IC`, `§6a UStG`, `BR-IC-11`, `BR-IC-12` | Intra-EU supply (category `K`) | `validators/rules/13.intra-eu.ts` | Implemented (BR-IC-11's BG-14 invoicing-period alternative to BT-72 is not supported). Also includes two checks beyond the formal EN 16931/XRechnung rules, as a §6a UStG plausibility safeguard: `INTRA_EU_SUPPLY_DELIVERY_COUNTRY_MATCHES_SELLER` (goods must leave the seller's own country) and `INTRA_EU_SUPPLY_SELLER_VAT_ID_INVALID_FORMAT`/`INTRA_EU_SUPPLY_BUYER_VAT_ID_INVALID_FORMAT` (per-country VAT ID format check, `core/utils/vat-id.ts` — pattern only, no checksum or VIES lookup) |
+| `BR-O-02` | Outside scope (category `O`) | `validators/rules/14.outside-scope.ts` | Implemented |
+| `BR-57` | Deliver-to country (BT-80) | `validators/rules/11.delivery.ts` | Implemented |
+| `BT-25`/`BT-26` (EN 16931 §6.2.3) | Credit notes (`381`) and corrective invoices (`384`) must reference the invoice they correct; credit notes must not have a positive amount due | `validators/rules/10.credit-note.ts` | Partial — checks `duePayableAmount <= 0` for `381` and requires `precedingInvoiceReference` for `381`/`384`; does not verify a corrective invoice's amended lines against the original document (no schema concept of "the original document" to diff against — see [`LIMITATIONS.md`](LIMITATIONS.md)) |
+| `BT-118`/`BT-119` VAT rate rules | Category ↔ rate consistency | `validators/rules/17.vat-rate.ts` | Implemented |
+| `BT-120`/`BT-121` exemption-reason presence | Exemption reason required/forbidden per category | `validators/rules/17.vat-rate.ts` (constant) + `validators/02.business-rules.ts` (enforcement) | Implemented |
 | `BR-DE-10`/`BR-DE-11` | Deliver-to city/postal code | — | Not implemented — see [`LIMITATIONS.md`](LIMITATIONS.md) |
 | Full BT → field mapping | — | [`DATA-MODEL.md`](DATA-MODEL.md) | Reference |
 
@@ -131,7 +132,7 @@ make validate-kosit
 ```
 
 This regenerates XML from all fixtures (`make generate`) and runs each file through
-KoSIT via `validators/kosit.ts`'s `runKosit()`. Output looks like:
+KoSIT via `validators/90.kosit.ts`'s `runKosit()`. Output looks like:
 
 ```
 ✓ dist/xml/domestic-simple.xml
@@ -142,7 +143,7 @@ KoSIT via `validators/kosit.ts`'s `runKosit()`. Output looks like:
 
 The command exits non-zero if any file has an `error`-severity finding — safe to wire
 into CI once a pipeline exists. `warning` and `information`-level findings are printed
-by inspecting the `KositResult.issues` array directly (see `validators/kosit.ts`); they
+by inspecting the `KositResult.issues` array directly (see `validators/90.kosit.ts`); they
 don't fail the build. Accepted findings of that kind are tracked in
 [`LIMITATIONS.md`](LIMITATIONS.md).
 

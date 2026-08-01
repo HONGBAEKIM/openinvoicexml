@@ -1,0 +1,81 @@
+{
+  "id": "GS-2026-0007",
+  "typeCode": "381",
+  "issueDate": "2026-06-20",
+  "currencyCode": "EUR",
+  "businessProcessType": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+  "buyerReference": "04011000-12345-03",
+
+  "precedingInvoiceReference": {
+    "id": "RE-2026-0042",
+    "issueDate": "2026-06-09"
+  },
+
+  "seller": {
+    "name": "Max Mustermann GmbH",
+    "vatId": "DE123456789",
+    "address": {
+      "line1": "Unter den Linden 1",
+      "city": "Berlin",
+      "postalCode": "10117",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "rechnung@mustermann.example",
+    "electronicAddressSchemeId": "EM",
+    "contact": {
+      "name": "Buchhaltung",
+      "telephone": "+49 30 1234567",
+      "email": "buchhaltung@mustermann.example"
+    }
+  },
+
+  "buyer": {
+    "name": "Acme GmbH",
+    "vatId": "DE987654321",
+    "address": {
+      "line1": "Marienplatz 1",
+      "city": "München",
+      "postalCode": "80331",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "einkauf@acme.example",
+    "electronicAddressSchemeId": "EM"
+  },
+
+  "lines": [
+    {
+      "id": "1",
+      "name": "TypeScript Consulting",
+      "description": "Full credit for invoice RE-2026-0042 (software architecture consulting, June 2026)",
+      "quantity": -8,
+      "unitCode": "HUR",
+      "unitPrice": 125.0,
+      "lineAmount": -1000.0,
+      "vatCategoryCode": "S",
+      "vatRate": 19
+    }
+  ],
+
+  "vatBreakdowns": [
+    {
+      "categoryCode": "S",
+      "rate": 19,
+      "taxableAmount": -1000.0,
+      "taxAmount": -190.0
+    }
+  ],
+
+  "taxExclusiveAmount": -1000.0,
+  "taxAmount": -190.0,
+  "taxInclusiveAmount": -1190.0,
+  "duePayableAmount": -1190.0,
+
+  "paymentMeans": {
+    "code": "58",
+    "iban": "DE89370400440532013000",
+    "accountName": "Max Mustermann GmbH",
+    "bic": "COBADEFFXXX"
+  },
+
+  "note": "Vollständige Gutschrift zu Rechnung RE-2026-0042 vom 09.06.2026."
+}

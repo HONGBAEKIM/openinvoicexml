@@ -1,0 +1,92 @@
+{
+  "id": "GS-2026-0008",
+  "typeCode": "381",
+  "issueDate": "2026-06-25",
+  "currencyCode": "EUR",
+  "businessProcessType": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+  "buyerReference": "04011000-12345-03",
+
+  "precedingInvoiceReference": {
+    "id": "RE-2026-0043",
+    "issueDate": "2026-06-09"
+  },
+
+  "seller": {
+    "name": "Max Mustermann GmbH",
+    "vatId": "DE123456789",
+    "address": {
+      "line1": "Unter den Linden 1",
+      "city": "Berlin",
+      "postalCode": "10117",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "rechnung@mustermann.example",
+    "electronicAddressSchemeId": "EM",
+    "contact": {
+      "name": "Buchhaltung",
+      "telephone": "+49 30 1234567",
+      "email": "buchhaltung@mustermann.example"
+    }
+  },
+
+  "buyer": {
+    "name": "Acme GmbH",
+    "vatId": "DE987654321",
+    "address": {
+      "line1": "Marienplatz 1",
+      "city": "München",
+      "postalCode": "80331",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "einkauf@acme.example",
+    "electronicAddressSchemeId": "EM"
+  },
+
+  "lines": [
+    {
+      "id": "2",
+      "name": "Code Review",
+      "description": "Partial credit for invoice RE-2026-0043: pull request review not delivered as agreed",
+      "quantity": -2,
+      "unitCode": "HUR",
+      "unitPrice": 95.0,
+      "lineAmount": -190.0,
+      "vatCategoryCode": "S",
+      "vatRate": 19
+    },
+    {
+      "id": "3",
+      "name": "Development Tools License",
+      "description": "Partial credit for invoice RE-2026-0043: license never activated",
+      "quantity": -1,
+      "unitCode": "C62",
+      "unitPrice": 49.0,
+      "lineAmount": -49.0,
+      "vatCategoryCode": "S",
+      "vatRate": 19
+    }
+  ],
+
+  "vatBreakdowns": [
+    {
+      "categoryCode": "S",
+      "rate": 19,
+      "taxableAmount": -239.0,
+      "taxAmount": -45.41
+    }
+  ],
+
+  "taxExclusiveAmount": -239.0,
+  "taxAmount": -45.41,
+  "taxInclusiveAmount": -284.41,
+  "duePayableAmount": -284.41,
+
+  "paymentMeans": {
+    "code": "58",
+    "iban": "DE89370400440532013000",
+    "accountName": "Max Mustermann GmbH",
+    "bic": "COBADEFFXXX"
+  },
+
+  "note": "Teilgutschrift zu Rechnung RE-2026-0043 vom 09.06.2026 für Positionen 2 (Code Review) und 3 (Development Tools License). Position 1 (TypeScript Consulting) bleibt unverändert bestehen."
+}
