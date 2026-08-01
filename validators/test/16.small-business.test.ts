@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
 
-import { checkSmallBusinessRequirements } from "../rules/small-business.js";
+import { checkSmallBusinessRequirements } from "../rules/16.small-business.js";
 import type { Invoice } from "../../core/types/invoice.js";
 import type { ValidationIssue } from "../types.js";
 
-import smallBusiness from "../../fixtures/small-business.invoice.json" with { type: "json" };
+import smallBusiness from "../../fixtures/07.small-business.invoice.json" with { type: "json" };
 
 function clone<T>(fixture: T): T {
   return JSON.parse(JSON.stringify(fixture)) as T;

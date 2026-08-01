@@ -32,7 +32,7 @@ import type { ValidationIssue } from "../types.js";
  *
  * Note: §19 UStG (Kleinunternehmerregelung) does NOT use category 'O'. Since
  * 1 January 2025, §19 small-business supplies are represented as VAT-exempt using
- * category 'E'. See `validators/rules/small-business.ts`.
+ * category 'E'. See `validators/rules/16.small-business.ts`.
  *
  * @see ../../docs/COMPLIANCE.md for the BR-O-02 source.
  */

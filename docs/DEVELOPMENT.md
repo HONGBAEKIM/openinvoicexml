@@ -126,11 +126,14 @@ This project has no runtime (`dependencies`) — only `devDependencies`, used fo
 
 Fixtures are example invoices in `fixtures/`. Each one represents a distinct legal scenario.
 
-1. **Create the JSON file** at `fixtures/<name>.invoice.json`. It must validate against `schemas/invoice.schema.json`.
+1. **Create the JSON file** at `fixtures/NN.<name>.invoice.json`, where `NN` is the next unused
+   two-digit number (fixtures are numbered `01`-`17` today, in the same order used by the
+   `fixtures` arrays in the test files below). It must validate against
+   `schemas/invoice.schema.json`.
 
-2. **Add it to the schema test** in `validators/test/invoice-schema.test.ts` — import the fixture and add it to the valid-fixture test array.
+2. **Add it to the schema test** in `validators/test/00.invoice-schema.test.ts` — import the fixture and add it to the valid-fixture test array.
 
-3. **Add it to the business rules test** in `validators/test/business-rules.test.ts` — import the fixture and add it to the valid-fixture array so `validateBusinessRules()` confirms it produces no issues.
+3. **Add it to the business rules test** in `validators/test/02.business-rules.test.ts` — import the fixture and add it to the valid-fixture array so `validateBusinessRules()` confirms it produces no issues.
 
 4. **Run the tests** to confirm everything passes:
 
@@ -140,7 +143,7 @@ Fixtures are example invoices in `fixtures/`. Each one represents a distinct leg
 
 5. **Document the scenario** it covers in a comment or in the fixtures `README.md`.
 
-**Naming convention:** `<scenario>.invoice.json` — e.g., `intra-eu-supply.invoice.json`, `credit-note-full.invoice.json`.
+**Naming convention:** `<scenario>.invoice.json` — e.g., `08.intra-eu-supply.invoice.json`, `16.credit-note-full.invoice.json`.
 
 ---
 

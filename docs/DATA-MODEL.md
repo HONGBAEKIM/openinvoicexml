@@ -8,7 +8,7 @@ Internal invoice schema v0.1 — the single source of truth for all output adapt
 
 The internal schema is the contract between user input and every downstream output module. The adapters consume an internal `Invoice` object rather than raw external input. When input originates as untyped JSON, the consumer should validate it against `schemas/invoice.schema.json` before treating it as an `Invoice` — this package currently uses AJV in its test suite to verify fixtures against the schema, but it does not run JSON Schema validation automatically in the `generateInvoice()` pipeline (see [`ARCHITECTURE.md`](ARCHITECTURE.md#no-runtime-dependencies)). This decoupling ensures that a change to the XML output format cannot corrupt the PDF output, and vice versa.
 
-`schemas/invoice.schema.json` enforces **structural correctness**: field types, required fields, allowed enumerations, and value formats. Business-rule validation (VAT arithmetic consistency, cross-field constraints from EN 16931 Schematron, §13b buyer-VAT-ID requirement) is out of scope here and is handled by the separate `validateBusinessRules()` layer (`validators/business-rules.ts` + `validators/rules/*.ts`, landed Week 7 — see [`ARCHITECTURE.md`](ARCHITECTURE.md#validators)).
+`schemas/invoice.schema.json` enforces **structural correctness**: field types, required fields, allowed enumerations, and value formats. Business-rule validation (VAT arithmetic consistency, cross-field constraints from EN 16931 Schematron, §13b buyer-VAT-ID requirement) is out of scope here and is handled by the separate `validateBusinessRules()` layer (`validators/02.business-rules.ts` + `validators/rules/*.ts`, landed Week 7 — see [`ARCHITECTURE.md`](ARCHITECTURE.md#validators)).
 
 ### Field naming conventions
 
@@ -70,7 +70,7 @@ This duplication is intentional at this stage — it keeps both representations 
 
 ### What is NOT validated here
 
-The following are intentionally out of scope for the JSON Schema and are instead handled by `validateBusinessRules()` (`validators/business-rules.ts` + `validators/rules/*.ts`, landed Week 7 — see [`ARCHITECTURE.md`](ARCHITECTURE.md#validators)):
+The following are intentionally out of scope for the JSON Schema and are instead handled by `validateBusinessRules()` (`validators/02.business-rules.ts` + `validators/rules/*.ts`, landed Week 7 — see [`ARCHITECTURE.md`](ARCHITECTURE.md#validators)):
 
 - **VAT arithmetic**: `vatBreakdown.taxAmount` must equal `taxableAmount × rate / 100` within rounding tolerance (BR-CO-17)
 - **Total cross-check**: `taxInclusiveAmount` must equal `taxExclusiveAmount + taxAmount` (BR-CO-15)
@@ -175,7 +175,7 @@ Buyer follows the same structure as seller. BT numbers shift to the BG-7 range. 
 | BT-47 | Buyer legal registration | `buyer.legalId` (opt., fallback: name)                                   | —                                                                   | `cac:PartyLegalEntity/cbc:CompanyID`                 |
 | BT-45 | Buyer legal name         | `buyer.name`                                                             | —                                                                   | `cac:PartyLegalEntity/cbc:RegistrationName`          |
 
-§14 Abs. 4 Nr. 1 UStG requires the full name and address of _both_ the supplier and the recipient — it is not seller-specific, unlike Nr. 2 (which concerns only the seller's own tax number / VAT ID). BT-48 (buyer VAT ID) is therefore not a Nr. 2 requirement at all: it's conditionally required by EN 16931 depending on VAT category — `BR-IC-02` requires it for category `K` (intra-EU supply), `BR-AE-02` for category `AE` (reverse charge) — both confirmed in `tools/kosit/config/resources/ubl/2.1/xsl/EN16931-UBL-validation.xsl`. This project's own `validators/rules/intra-eu.ts` (`INTRA_EU_SUPPLY_BUYER_VAT_ID_REQUIRED`) and the inline `REVERSE_CHARGE_BUYER_VAT_ID_REQUIRED` check in `validators/business-rules.ts` already enforce this correctly — only this document's legal-basis citation was wrong, not the implementation.
+§14 Abs. 4 Nr. 1 UStG requires the full name and address of _both_ the supplier and the recipient — it is not seller-specific, unlike Nr. 2 (which concerns only the seller's own tax number / VAT ID). BT-48 (buyer VAT ID) is therefore not a Nr. 2 requirement at all: it's conditionally required by EN 16931 depending on VAT category — `BR-IC-02` requires it for category `K` (intra-EU supply), `BR-AE-02` for category `AE` (reverse charge) — both confirmed in `tools/kosit/config/resources/ubl/2.1/xsl/EN16931-UBL-validation.xsl`. This project's own `validators/rules/13.intra-eu.ts` (`INTRA_EU_SUPPLY_BUYER_VAT_ID_REQUIRED`) and the inline `REVERSE_CHARGE_BUYER_VAT_ID_REQUIRED` check in `validators/02.business-rules.ts` already enforce this correctly — only this document's legal-basis citation was wrong, not the implementation.
 
 ### Delivery (BG-13) / Deliver-to address (BG-15)
 

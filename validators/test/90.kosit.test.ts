@@ -10,25 +10,25 @@ import { join } from "node:path";
 // afterAll() → runs once after all tests are finished to clean up.
 import { describe, it, expect, afterAll } from "vitest";
 
-import { runKosit } from "../kosit.js";
+import { runKosit } from "../90.kosit.js";
 import { toXRechnung } from "../../adapters/xrechnung.js";
 import type { Invoice } from "../../core/index.js";
 
-import domesticSimple from "../../fixtures/domestic-simple.invoice.json" with { type: "json" };
-import domesticMultiLine from "../../fixtures/domestic-multi-line.invoice.json" with { type: "json" };
-import reducedRate from "../../fixtures/reduced-rate.invoice.json" with { type: "json" };
-import exempt from "../../fixtures/exempt.invoice.json" with { type: "json" };
-import zeroRated from "../../fixtures/zero-rated.invoice.json" with { type: "json" };
-import reverseCharge from "../../fixtures/reverse-charge.invoice.json" with { type: "json" };
-import smallBusiness from "../../fixtures/small-business.invoice.json" with { type: "json" };
-import intraEuSupply from "../../fixtures/intra-eu-supply.invoice.json" with { type: "json" };
-import exportInvoice from "../../fixtures/export.invoice.json" with { type: "json" };
-import reverseChargeConstruction from "../../fixtures/reverse-charge-construction.invoice.json" with { type: "json" };
-import reverseChargeScrapMetal from "../../fixtures/reverse-charge-scrap-metal.invoice.json" with { type: "json" };
-import reverseChargeSecurityTransfer from "../../fixtures/reverse-charge-security-transfer.invoice.json" with { type: "json" };
-import reverseChargeCleaning from "../../fixtures/reverse-charge-cleaning.invoice.json" with { type: "json" };
-import reverseChargeMobileDevices from "../../fixtures/reverse-charge-mobile-devices.invoice.json" with { type: "json" };
-import reverseChargeGasAndElectricity from "../../fixtures/reverse-charge-gas-and-electricity.invoice.json" with { type: "json" };
+import domesticSimple from "../../fixtures/01.domestic-simple.invoice.json" with { type: "json" };
+import domesticMultiLine from "../../fixtures/02.domestic-multi-line.invoice.json" with { type: "json" };
+import reducedRate from "../../fixtures/03.reduced-rate.invoice.json" with { type: "json" };
+import exempt from "../../fixtures/04.exempt.invoice.json" with { type: "json" };
+import zeroRated from "../../fixtures/05.zero-rated.invoice.json" with { type: "json" };
+import reverseCharge from "../../fixtures/06.reverse-charge.invoice.json" with { type: "json" };
+import smallBusiness from "../../fixtures/07.small-business.invoice.json" with { type: "json" };
+import intraEuSupply from "../../fixtures/08.intra-eu-supply.invoice.json" with { type: "json" };
+import exportInvoice from "../../fixtures/09.export.invoice.json" with { type: "json" };
+import reverseChargeConstruction from "../../fixtures/10.reverse-charge-construction.invoice.json" with { type: "json" };
+import reverseChargeScrapMetal from "../../fixtures/11.reverse-charge-scrap-metal.invoice.json" with { type: "json" };
+import reverseChargeSecurityTransfer from "../../fixtures/12.reverse-charge-security-transfer.invoice.json" with { type: "json" };
+import reverseChargeCleaning from "../../fixtures/13.reverse-charge-cleaning.invoice.json" with { type: "json" };
+import reverseChargeMobileDevices from "../../fixtures/14.reverse-charge-mobile-devices.invoice.json" with { type: "json" };
+import reverseChargeGasAndElectricity from "../../fixtures/15.reverse-charge-gas-and-electricity.invoice.json" with { type: "json" };
 
 const fixtures: [string, unknown][] = [
   ["domestic-simple", domesticSimple],

@@ -24,7 +24,7 @@ If this project ever expands toward a generic EN 16931 library (rather than a Ge
 
 Source for current German VAT rates: [§12 UStG][ustg-12].
 
-`checkVatRateForCategory` (`validators/rules/vat-rate.ts`) only accepts `19` or `7` for category `S` (`STANDARD_VAT_RATES`). Germany's COVID-era rates (16%/5%, July–December 2020) and other EU member states' EN 16931 standard/reduced rates are rejected as `VAT_RATE_INVALID_FOR_CATEGORY`.
+`checkVatRateForCategory` (`validators/rules/17.vat-rate.ts`) only accepts `19` or `7` for category `S` (`STANDARD_VAT_RATES`). Germany's COVID-era rates (16%/5%, July–December 2020) and other EU member states' EN 16931 standard/reduced rates are rejected as `VAT_RATE_INVALID_FOR_CATEGORY`.
 
 **Workaround:** Not applicable today. Adding support means widening `STANDARD_VAT_RATES` plus a corresponding test fixture and KoSIT validation confirmation — tracked as a future extension, not current behavior.
 
@@ -33,7 +33,7 @@ Source for current German VAT rates: [§12 UStG][ustg-12].
 ### §13b UStG reverse-charge subcases — 13 of 14 named subcases modeled; 6 have fixtures; subcase-tag alone doesn't prove reverse charge applies
 
 German law recognizes 14 distinct §13b UStG reverse-charge transaction types (§13b Abs. 1 plus
-Abs. 2 Nr. 1–12). `validators/rules/reverse-charge.ts` models an
+Abs. 2 Nr. 1–12). `validators/rules/15.reverse-charge.ts` models an
 optional `reverseChargeReason` identifier (`VatBreakdown.reverseChargeReason`) covering 13 of them,
 each with its own free-text keyword check against the exemption reason (VATEX has no per-subcase
 code, so category `AE` and `VATEX-EU-AE` stay generic across all of them).
@@ -46,15 +46,15 @@ UStG][ustg-anlage-3] (scrap and waste goods), [Anlage 4 UStG][ustg-anlage-4] (in
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------- |
 | `eu-cross-border-service`   | [§13b Abs. 1 UStG][ustg-13b]                                                                                                         | No                                                                   |
 | `foreign-supplier`          | [§13b Abs. 2 Nr. 1 UStG][ustg-13b]                                                                                                   | No                                                                   |
-| `security-transfer`         | [§13b Abs. 2 Nr. 2 UStG][ustg-13b]                                                                                                   | **Yes** — `fixtures/reverse-charge-security-transfer.invoice.json`   |
+| `security-transfer`         | [§13b Abs. 2 Nr. 2 UStG][ustg-13b]                                                                                                   | **Yes** — `fixtures/12.reverse-charge-security-transfer.invoice.json`   |
 | `real-estate`               | [§13b Abs. 2 Nr. 3 UStG][ustg-13b]                                                                                                   | No                                                                   |
-| `construction`              | [§13b Abs. 2 Nr. 4 UStG][ustg-13b]                                                                                                   | **Yes** — `fixtures/reverse-charge-construction.invoice.json`        |
-| `gas-and-electricity`       | [§13b Abs. 2 Nr. 5 UStG][ustg-13b]                                                                                                   | **Yes** — `fixtures/reverse-charge-gas-and-electricity.invoice.json` |
+| `construction`              | [§13b Abs. 2 Nr. 4 UStG][ustg-13b]                                                                                                   | **Yes** — `fixtures/10.reverse-charge-construction.invoice.json`        |
+| `gas-and-electricity`       | [§13b Abs. 2 Nr. 5 UStG][ustg-13b]                                                                                                   | **Yes** — `fixtures/15.reverse-charge-gas-and-electricity.invoice.json` |
 | `emission-certificates`     | [§13b Abs. 2 Nr. 6 UStG][ustg-13b]                                                                                                   | No                                                                   |
-| `scrap-and-waste`           | [§13b Abs. 2 Nr. 7 UStG][ustg-13b], [Anlage 3][ustg-anlage-3]                                                                                         | **Yes** — `fixtures/reverse-charge-scrap-metal.invoice.json`         |
-| `cleaning`                  | [§13b Abs. 2 Nr. 8 UStG][ustg-13b]                                                                                                   | **Yes** — `fixtures/reverse-charge-cleaning.invoice.json`            |
+| `scrap-and-waste`           | [§13b Abs. 2 Nr. 7 UStG][ustg-13b], [Anlage 3][ustg-anlage-3]                                                                                         | **Yes** — `fixtures/11.reverse-charge-scrap-metal.invoice.json`         |
+| `cleaning`                  | [§13b Abs. 2 Nr. 8 UStG][ustg-13b]                                                                                                   | **Yes** — `fixtures/13.reverse-charge-cleaning.invoice.json`            |
 | `qualifying-gold`           | [§13b Abs. 2 Nr. 9 UStG][ustg-13b]                                                                                                   | No                                                                   |
-| `mobile-devices`            | [§13b Abs. 2 Nr. 10 UStG][ustg-13b], [Anlage 4][ustg-anlage-4]                                                                                        | **Yes** — `fixtures/reverse-charge-mobile-devices.invoice.json`      |
+| `mobile-devices`            | [§13b Abs. 2 Nr. 10 UStG][ustg-13b], [Anlage 4][ustg-anlage-4]                                                                                        | **Yes** — `fixtures/14.reverse-charge-mobile-devices.invoice.json`      |
 | `industrial-metals`         | [§13b Abs. 2 Nr. 11 UStG][ustg-13b], [Anlage 4][ustg-anlage-4] (broader than `scrap-and-waste` — raw silver, platinum, copper, aluminium, zinc, etc.) | No                                                                   |
 | `telecommunications`        | [§13b Abs. 2 Nr. 12 UStG][ustg-13b]                                                                                                  | No                                                                   |
 
@@ -156,7 +156,7 @@ disclaimer.
 
 Source: [§19 UStG][ustg-19].
 
-`validators/rules/small-business.ts` only checks that a seller tax registration ID (BT-32) or
+`validators/rules/16.small-business.ts` only checks that a seller tax registration ID (BT-32) or
 VAT ID (BT-31) is present whenever a VAT breakdown's free-text exemption reason references §19
 UStG (see `SMALL_BUSINESS_REFERENCE_PATTERN`). It does not verify the actual §19 Abs. 1 turnover
 conditions — previous-calendar-year turnover not exceeding €25,000 and current-calendar-year
@@ -185,12 +185,12 @@ Primary source: [§3a UStG][ustg-3a].
 
 `core/utils/place-of-supply.ts` (`resolvePlaceOfSupply`) implements just one rule: the place of
 supply defaults to the seller's country, and is overridden to the buyer's country for B2B
-services when the two differ (EN 16931 / German VAT law's basic §3a rule). `validators/business-rules.ts`
+services when the two differ (EN 16931 / German VAT law's basic §3a rule). `validators/02.business-rules.ts`
 wires this in as a single cross-border check: whenever seller and buyer countries differ, it
 emits a `warning`-severity `PLACE_OF_SUPPLY_CROSS_BORDER` issue naming which place of supply
 would apply if the transaction is a B2B service, so it can be verified by hand. This never blocks
 `generateInvoice()` — it is informational only, unlike the `error`-severity checks elsewhere in
-`business-rules.ts`.
+`02.business-rules.ts`.
 
 Not covered at all:
 
@@ -219,7 +219,7 @@ artefacts][en16931].
 
 This validator enforces BT-80 deliver-to country code whenever a `deliverTo` address is
 supplied (EN 16931's `BR-57`, any VAT category — enforced both by JSON Schema and by
-`validators/rules/delivery.ts`) and independently for category `K` (`BR-IC-12`). It does
+`validators/rules/11.delivery.ts`) and independently for category `K` (`BR-IC-12`). It does
 **not** enforce Germany's `BR-DE-10`/`BR-DE-11` (published elsewhere as `DE-R-010`/`DE-R-011`),
 which require BT-77 city and BT-78 postal code alongside the country code.
 
@@ -243,7 +243,7 @@ generation.
 ### XML (XRechnung UBL 2.1) — implemented, tested against KoSIT
 
 `adapters/xrechnung.ts` (Week 5) generates UBL 2.1 XML for all 15 current fixtures, and
-`validators/test/kosit.test.ts` (run via `npm test`) confirms zero KoSIT `error`-severity
+`validators/test/90.kosit.test.ts` (run via `npm test`) confirms zero KoSIT `error`-severity
 findings for each. Passing fixtures demonstrate coverage of those specific examples, not
 that every document the adapter can produce will pass KoSIT; see
 [`COMPLIANCE.md`](COMPLIANCE.md#validating-xrechnung-output). §13b subcase-specific business-rule
@@ -273,12 +273,12 @@ The following scenarios are known and planned but not yet implemented:
 
 ## Validator Integration
 
-KoSIT validator integration landed in **Phase 2, Week 6** (`validators/kosit.ts`, `make
+KoSIT validator integration landed in **Phase 2, Week 6** (`validators/90.kosit.ts`, `make
 validate-kosit`) — see [`COMPLIANCE.md`](COMPLIANCE.md#validating-xrechnung-output) for setup and usage. All 15 current
-fixtures pass with zero `error`-severity findings, verified via `validators/test/kosit.test.ts`
+fixtures pass with zero `error`-severity findings, verified via `validators/test/90.kosit.test.ts`
 as part of `npm test`.
 
-The `BusinessRuleValidator` (`validators/business-rules.ts`, added in Week 3) checks VAT
+The `BusinessRuleValidator` (`validators/02.business-rules.ts`, added in Week 3) checks VAT
 category/rate consistency, §13b reverse-charge requirements, exemption reasons, and EN 16931
 rounding/amount consistency directly on the internal `Invoice` model. This is independent of and
 does not replace KoSIT: it catches business-rule violations before XML generation runs, while
@@ -307,7 +307,7 @@ XML — for callers who validate separately or via their own pipeline.
 
   For VAT category `K` (intra-EU supply), `BR-IC-11` makes BT-72 or BG-14 mandatory
   rather than merely recommended. Since BG-14 isn't supported, this implementation
-  requires BT-72 for category `K` invoices — see `validators/rules/intra-eu.ts`.
+  requires BT-72 for category `K` invoices — see `validators/rules/13.intra-eu.ts`.
 
 [en16931]: https://github.com/ConnectingEurope/eInvoicing-EN16931
 [en16931-artefacts]: https://ec.europa.eu/digital-building-blocks/sites/display/DIGITAL/Registry+of+supporting+artefacts+to+implement+EN16931

@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
 
-import { checkIntraEuSupplyRequirements } from "../rules/intra-eu.js";
+import { checkIntraEuSupplyRequirements } from "../rules/13.intra-eu.js";
 import type { Invoice } from "../../core/types/invoice.js";
 import type { ValidationIssue } from "../types.js";
 
-import intraEuSupply from "../../fixtures/intra-eu-supply.invoice.json" with { type: "json" };
+import intraEuSupply from "../../fixtures/08.intra-eu-supply.invoice.json" with { type: "json" };
 
 function clone<T>(fixture: T): T {
   return JSON.parse(JSON.stringify(fixture)) as T;
@@ -43,7 +43,7 @@ function check(invoice: Invoice): ValidationIssue[] {
  * | DE (bad VAT ID) | FR        | FR              | No          | seller VAT ID has the wrong format           |
  *
  * (The "deliverTo present but missing only countryCode -> BR-57, not BR-IC-12" case is covered by
- * the "cross-rule interactions" test in business-rules.test.ts instead, via the full pipeline —
+ * the "cross-rule interactions" test in 02.business-rules.test.ts instead, via the full pipeline —
  * not duplicated here.)
  */
 describe("checkIntraEuSupplyRequirements", () => {

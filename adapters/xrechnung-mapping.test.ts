@@ -10,7 +10,7 @@ import {
 } from "./xrechnung-mapping.js";
 import type { Invoice, Party } from "../core/index.js";
 
-import domesticSimple from "../fixtures/domestic-simple.invoice.json" with { type: "json" };
+import domesticSimple from "../fixtures/01.domestic-simple.invoice.json" with { type: "json" };
 
 const baseParty: Party = {
   name: "Test GmbH",

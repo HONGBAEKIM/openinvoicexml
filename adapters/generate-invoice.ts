@@ -1,5 +1,5 @@
 import type { Invoice } from "../core/index.js";
-import { validateBusinessRules, type ValidationIssue } from "../validators/business-rules.js";
+import { validateBusinessRules, type ValidationIssue } from "../validators/02.business-rules.js";
 import { toXRechnung } from "./xrechnung.js";
 
 export interface GenerateInvoiceResult {

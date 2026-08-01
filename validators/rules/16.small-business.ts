@@ -9,7 +9,7 @@ const SMALL_BUSINESS_REFERENCE_PATTERN = /§\s?19\s?UStG/i;
  * Checks §19 UStG (Kleinunternehmerregelung) requirements. Since 1 January 2025, §19
  * small-business supplies are tax-EXEMPT (VAT category 'E'), not outside the scope of
  * VAT — category 'O' is reserved for genuinely non-taxable transactions unrelated to
- * §19 (see `validators/rules/outside-scope.ts` for its BR-O-02 check).
+ * §19 (see `validators/rules/14.outside-scope.ts` for its BR-O-02 check).
  *
  * Because category 'E' is shared with every other VAT exemption ground (e.g. §4 UStG
  * medical/rental exemptions), this only applies the extra §19 check when a breakdown's

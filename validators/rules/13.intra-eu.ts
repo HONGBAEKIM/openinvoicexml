@@ -104,7 +104,7 @@ export function checkIntraEuSupplyRequirements(
     });
   }
   // Only flag a missing deliver-to address group here; a deliverTo group that's present
-  // but missing countryCode is caught by the general BR-57 check in rules/delivery.ts,
+  // but missing countryCode is caught by the general BR-57 check in rules/11.delivery.ts,
   // to avoid reporting the same missing value twice.
   if (!delivery?.deliverTo) {
     issues.push({

@@ -32,7 +32,7 @@ const SUBCASE_REFERENCE_PATTERNS: Record<ReverseChargeSubcase, RegExp> = {
  * Checks §13b UStG reverse-charge subcase requirements: `reverseChargeReason` is only
  * valid when the breakdown's `categoryCode` is 'AE'; when it is, the free-text exemption
  * reason must reference that specific subcase, not just generic reverse-charge wording.
- * The subcase-agnostic buyer-VAT-ID requirement for 'AE' lives in business-rules.ts and
+ * The subcase-agnostic buyer-VAT-ID requirement for 'AE' lives in 02.business-rules.ts and
  * is unaffected by this — it applies regardless of whether a subcase is declared.
  *
  * @see ../../docs/COMPLIANCE.md for the §13b UStG source and this rule's "Partial" status.

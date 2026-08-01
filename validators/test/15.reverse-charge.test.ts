@@ -1,17 +1,17 @@
 import { describe, it, expect } from "vitest";
 
-import { checkReverseChargeSubcaseRequirements } from "../rules/reverse-charge.js";
+import { checkReverseChargeSubcaseRequirements } from "../rules/15.reverse-charge.js";
 import type { Invoice } from "../../core/types/invoice.js";
 import type { ValidationIssue } from "../types.js";
 
-import domesticSimple from "../../fixtures/domestic-simple.invoice.json" with { type: "json" };
-import reverseCharge from "../../fixtures/reverse-charge.invoice.json" with { type: "json" };
-import reverseChargeConstruction from "../../fixtures/reverse-charge-construction.invoice.json" with { type: "json" };
-import reverseChargeScrapMetal from "../../fixtures/reverse-charge-scrap-metal.invoice.json" with { type: "json" };
-import reverseChargeSecurityTransfer from "../../fixtures/reverse-charge-security-transfer.invoice.json" with { type: "json" };
-import reverseChargeCleaning from "../../fixtures/reverse-charge-cleaning.invoice.json" with { type: "json" };
-import reverseChargeMobileDevices from "../../fixtures/reverse-charge-mobile-devices.invoice.json" with { type: "json" };
-import reverseChargeGasAndElectricity from "../../fixtures/reverse-charge-gas-and-electricity.invoice.json" with { type: "json" };
+import domesticSimple from "../../fixtures/01.domestic-simple.invoice.json" with { type: "json" };
+import reverseCharge from "../../fixtures/06.reverse-charge.invoice.json" with { type: "json" };
+import reverseChargeConstruction from "../../fixtures/10.reverse-charge-construction.invoice.json" with { type: "json" };
+import reverseChargeScrapMetal from "../../fixtures/11.reverse-charge-scrap-metal.invoice.json" with { type: "json" };
+import reverseChargeSecurityTransfer from "../../fixtures/12.reverse-charge-security-transfer.invoice.json" with { type: "json" };
+import reverseChargeCleaning from "../../fixtures/13.reverse-charge-cleaning.invoice.json" with { type: "json" };
+import reverseChargeMobileDevices from "../../fixtures/14.reverse-charge-mobile-devices.invoice.json" with { type: "json" };
+import reverseChargeGasAndElectricity from "../../fixtures/15.reverse-charge-gas-and-electricity.invoice.json" with { type: "json" };
 
 function clone<T>(fixture: T): T {
   return JSON.parse(JSON.stringify(fixture)) as T;

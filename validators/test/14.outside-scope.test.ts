@@ -1,10 +1,10 @@
 import { describe, it, expect } from "vitest";
 
-import { checkOutsideScopeRequirements } from "../rules/outside-scope.js";
+import { checkOutsideScopeRequirements } from "../rules/14.outside-scope.js";
 import type { Invoice } from "../../core/types/invoice.js";
 import type { ValidationIssue } from "../types.js";
 
-import domesticSimple from "../../fixtures/domestic-simple.invoice.json" with { type: "json" };
+import domesticSimple from "../../fixtures/01.domestic-simple.invoice.json" with { type: "json" };
 
 function clone<T>(fixture: T): T {
   return JSON.parse(JSON.stringify(fixture)) as T;

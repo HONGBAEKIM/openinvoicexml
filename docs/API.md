@@ -65,7 +65,7 @@ or KoSIT. Use this only when you validate separately (your own pipeline, or a di
 TypeScript can catch structurally invalid input at compile time when callers use
 the `Invoice` type correctly. Runtime input, such as parsed JSON or data cast to
 `Invoice`, is not automatically validated by `toXRechnung` and should be checked
-with the JSON Schema validator first (see `validators/test/invoice-schema.test.ts`)
+with the JSON Schema validator first (see `validators/test/00.invoice-schema.test.ts`)
 if your input arrives as untyped JSON.
 
 ## `ValidationIssue` — error-code contract
@@ -91,8 +91,8 @@ interface ValidationIssue {
 `severity: "error"`; the one exception is `PLACE_OF_SUPPLY_CROSS_BORDER`, which is
 `"warning"`-severity and never blocks `generateInvoice()` (see the "Place of supply" section
 in [`LIMITATIONS.md`](LIMITATIONS.md)).
-A representative sample of the codes currently produced by `validators/business-rules.ts` and
-`validators/rules/vat-rate.ts`:
+A representative sample of the codes currently produced by `validators/02.business-rules.ts` and
+`validators/rules/17.vat-rate.ts`:
 
 | Code                                                                                                                                                      | Severity  | Meaning                                                                                                                           |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------- |
@@ -107,7 +107,7 @@ A representative sample of the codes currently produced by `validators/business-
 | `INVOICE_TAX_EXCLUSIVE_AMOUNT_MISMATCH` / `INVOICE_TAX_AMOUNT_MISMATCH` / `INVOICE_TAX_INCLUSIVE_AMOUNT_MISMATCH` / `INVOICE_DUE_PAYABLE_AMOUNT_MISMATCH` | `error`   | Document-level totals (BT-109/110/112/115) don't reconcile against the VAT breakdown sums                                         |
 | `PLACE_OF_SUPPLY_CROSS_BORDER`                                                                                                                            | `warning` | Seller/buyer countries differ — informational only, names which place of supply would apply for a B2B service                    |
 
-This list isn't exhaustive by design — new codes are added as `validators/business-rules.ts`
+This list isn't exhaustive by design — new codes are added as `validators/02.business-rules.ts`
 grows (e.g. Phase 3's [§19][ustg-19]/[§13b][ustg-13b]-subcase/credit-note rules). Read the source directly for the
 full, current set rather than treating this table as authoritative long-term.
 

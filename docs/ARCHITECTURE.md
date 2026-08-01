@@ -108,21 +108,22 @@ Three validation layers, each catching a different class of error:
 | File                        | Purpose                                                                    |
 | ---------------------------- | -------------------------------------------------------------------------- |
 | `types.ts`                  | `ValidationIssue` interface — the return type for all validation           |
-| `business-rules.ts`         | `validateBusinessRules()` — orchestrates the checks below plus inline VAT-arithmetic/document-total/place-of-supply checks |
-| `rules/vat-rate.ts`         | VAT rate/category consistency, exemption-reason presence, decimal precision |
-| `rules/small-business.ts`   | [§19 UStG][ustg-19] small-business exemption (category `E`)                           |
-| `rules/outside-scope.ts`    | Category `O` (`BR-O-02`, see [en16931])                                                   |
-| `rules/intra-eu.ts`         | Intra-EU supply (category `K`)                                            |
-| `rules/export.ts`           | Export outside the EU (category `G`)                                      |
-| `rules/reverse-charge.ts`   | [§13b UStG][ustg-13b] reverse-charge subcases (category `AE`)                         |
-| `rules/delivery.ts`         | Deliver-to address (BG-15, `BR-57`, see [en16931])                                       |
-| `kosit.ts`                  | `runKosit()` — wraps the external KoSIT validator (XSD/Schematron, not a TS business rule) |
+| `02.business-rules.ts`         | `validateBusinessRules()` — orchestrates the checks below plus inline VAT-arithmetic/document-total/place-of-supply checks |
+| `rules/17.vat-rate.ts`         | VAT rate/category consistency, exemption-reason presence, decimal precision |
+| `rules/16.small-business.ts`   | [§19 UStG][ustg-19] small-business exemption (category `E`)                           |
+| `rules/14.outside-scope.ts`    | Category `O` (`BR-O-02`, see [en16931])                                                   |
+| `rules/13.intra-eu.ts`         | Intra-EU supply (category `K`)                                            |
+| `rules/12.export.ts`           | Export outside the EU (category `G`)                                      |
+| `rules/15.reverse-charge.ts`   | [§13b UStG][ustg-13b] reverse-charge subcases (category `AE`)                         |
+| `rules/11.delivery.ts`         | Deliver-to address (BG-15, `BR-57`, see [en16931])                                       |
+| `rules/10.credit-note.ts`      | Credit notes (`381`) / corrective invoices (`384`) — `duePayableAmount`, `precedingInvoiceReference` |
+| `90.kosit.ts`                  | `runKosit()` — wraps the external KoSIT validator (XSD/Schematron, not a TS business rule) |
 | `index.ts`                  | Re-exports public API                                                     |
-| `test/*.ts`                 | One test file per module above, plus the pipeline-level tests for `business-rules.ts` |
+| `test/*.ts`                 | One test file per module above, plus the pipeline-level tests for `02.business-rules.ts` |
 
-**Schema validation** (`invoice.schema.json`) catches structural errors: missing fields, wrong types, invalid formats. This package doesn't export a schema-validation function — `validators/test/invoice-schema.test.ts` uses AJV (a devDependency) to check the schema against fixtures during this repo's own tests. A consumer validating untyped JSON at runtime brings their own JSON Schema validator against `schemas/invoice.schema.json`.
+**Schema validation** (`invoice.schema.json`) catches structural errors: missing fields, wrong types, invalid formats. This package doesn't export a schema-validation function — `validators/test/00.invoice-schema.test.ts` uses AJV (a devDependency) to check the schema against fixtures during this repo's own tests. A consumer validating untyped JSON at runtime brings their own JSON Schema validator against `schemas/invoice.schema.json`.
 
-**Business rule validation** (`validateBusinessRules()`) catches legal errors that valid JSON can still contain — see each `rules/*.ts` module above for its own scenario, plus these checks inline in `business-rules.ts` itself:
+**Business rule validation** (`validateBusinessRules()`) catches legal errors that valid JSON can still contain — see each `rules/*.ts` module above for its own scenario, plus these checks inline in `02.business-rules.ts` itself:
 
 - VAT rate must match category (S requires 19% or 7%; Z/E/AE/K/G/O require 0%)
 - Reverse charge (AE) requires buyer VAT ID ([§13b UStG][ustg-13b])
@@ -133,7 +134,7 @@ Three validation layers, each catching a different class of error:
 - All monetary amounts must have at most 2 decimal places
 - Cross-border invoices get a warning-severity place-of-supply notice (never blocking) — see `docs/LIMITATIONS.md`
 
-**KoSIT validation** (`kosit.ts`) is a separate, external mechanism: it shells out to the official Java validator to confirm the generated XML itself conforms to the XRechnung XSD/Schematron — see [`COMPLIANCE.md`](COMPLIANCE.md#validating-xrechnung-output). It doesn't replace `validateBusinessRules()`; the two catch different things (business-rule violations on the internal model vs. full Schematron conformance on the generated XML).
+**KoSIT validation** (`90.kosit.ts`) is a separate, external mechanism: it shells out to the official Java validator to confirm the generated XML itself conforms to the XRechnung XSD/Schematron — see [`COMPLIANCE.md`](COMPLIANCE.md#validating-xrechnung-output). It doesn't replace `validateBusinessRules()`; the two catch different things (business-rule violations on the internal model vs. full Schematron conformance on the generated XML).
 
 Validators return `ValidationIssue[]` — a flat array of plain objects. They never throw exceptions. Callers decide how to handle issues (log, display, block output).
 
@@ -160,21 +161,21 @@ Example invoice JSON files that validate against the schema. Each fixture repres
 
 | Fixture                                            | Scenario                                          |
 | --------------------------------------------------- | -------------------------------------------------- |
-| `domestic-simple.invoice.json`                     | Standard domestic invoice, 19% VAT (S)            |
-| `domestic-multi-line.invoice.json`                 | Multiple line items, 19% VAT (S)                  |
-| `reduced-rate.invoice.json`                        | Reduced 7% VAT rate (S)                           |
-| `zero-rated.invoice.json`                          | Zero-rated supply (Z)                             |
-| `exempt.invoice.json`                               | VAT-exempt supply, [§4 UStG][ustg-4] (E)                    |
-| `reverse-charge.invoice.json`                      | [§13b][ustg-13b] reverse charge, generic (AE)                 |
-| `small-business.invoice.json`                      | [§19 UStG][ustg-19] Kleinunternehmer exemption (E)           |
-| `intra-eu-supply.invoice.json`                     | Intra-EU supply, [§6a UStG][ustg-6a] (K)                     |
-| `export.invoice.json`                              | Export outside the EU (G)                         |
-| `reverse-charge-construction.invoice.json`         | [§13b][ustg-13b] Abs. 2 Nr. 4 construction services (AE)      |
-| `reverse-charge-scrap-metal.invoice.json`          | [§13b][ustg-13b] Abs. 2 Nr. 7 scrap/waste, Anlage 3 (AE)      |
-| `reverse-charge-security-transfer.invoice.json`    | [§13b][ustg-13b] Abs. 2 Nr. 2 security-asset transfer (AE)    |
-| `reverse-charge-cleaning.invoice.json`             | [§13b][ustg-13b] Abs. 2 Nr. 8 building cleaning (AE)          |
-| `reverse-charge-mobile-devices.invoice.json`       | [§13b][ustg-13b] Abs. 2 Nr. 10 mobile devices, Anlage 4 (AE)  |
-| `reverse-charge-gas-and-electricity.invoice.json`  | [§13b][ustg-13b] Abs. 2 Nr. 5 gas/electricity (AE)            |
+| `01.domestic-simple.invoice.json`                     | Standard domestic invoice, 19% VAT (S)            |
+| `02.domestic-multi-line.invoice.json`                 | Multiple line items, 19% VAT (S)                  |
+| `03.reduced-rate.invoice.json`                        | Reduced 7% VAT rate (S)                           |
+| `05.zero-rated.invoice.json`                          | Zero-rated supply (Z)                             |
+| `04.exempt.invoice.json`                               | VAT-exempt supply, [§4 UStG][ustg-4] (E)                    |
+| `06.reverse-charge.invoice.json`                      | [§13b][ustg-13b] reverse charge, generic (AE)                 |
+| `07.small-business.invoice.json`                      | [§19 UStG][ustg-19] Kleinunternehmer exemption (E)           |
+| `08.intra-eu-supply.invoice.json`                     | Intra-EU supply, [§6a UStG][ustg-6a] (K)                     |
+| `09.export.invoice.json`                              | Export outside the EU (G)                         |
+| `10.reverse-charge-construction.invoice.json`         | [§13b][ustg-13b] Abs. 2 Nr. 4 construction services (AE)      |
+| `11.reverse-charge-scrap-metal.invoice.json`          | [§13b][ustg-13b] Abs. 2 Nr. 7 scrap/waste, Anlage 3 (AE)      |
+| `12.reverse-charge-security-transfer.invoice.json`    | [§13b][ustg-13b] Abs. 2 Nr. 2 security-asset transfer (AE)    |
+| `13.reverse-charge-cleaning.invoice.json`             | [§13b][ustg-13b] Abs. 2 Nr. 8 building cleaning (AE)          |
+| `14.reverse-charge-mobile-devices.invoice.json`       | [§13b][ustg-13b] Abs. 2 Nr. 10 mobile devices, Anlage 4 (AE)  |
+| `15.reverse-charge-gas-and-electricity.invoice.json`  | [§13b][ustg-13b] Abs. 2 Nr. 5 gas/electricity (AE)            |
 
 Fixtures serve three purposes: test inputs for automated tests, reference implementations for contributors, and documentation of supported scenarios. See [`LIMITATIONS.md`](LIMITATIONS.md) for which §13b subcases still lack a fixture.
 
@@ -190,7 +191,7 @@ The invoice structure is defined in JSON Schema (`schemas/invoice.schema.json`),
 
 ### No runtime dependencies
 
-The engine has zero production dependencies. All dependencies (`ajv`, `vitest`, `eslint`, `prettier`, `typescript`) are devDependencies used only for development and testing — nothing in `core/`, `adapters/`, or the exported `validators/` API (`validateBusinessRules`, `runKosit`) imports `ajv`. `ajv` is used solely inside `validators/test/invoice-schema.test.ts` to check `schemas/invoice.schema.json` against the fixtures as part of this repo's own test suite; it is not exported for consumers to run JSON Schema validation at runtime. A consumer who needs to validate untyped JSON against the schema before building an `Invoice` supplies their own JSON Schema validator.
+The engine has zero production dependencies. All dependencies (`ajv`, `vitest`, `eslint`, `prettier`, `typescript`) are devDependencies used only for development and testing — nothing in `core/`, `adapters/`, or the exported `validators/` API (`validateBusinessRules`, `runKosit`) imports `ajv`. `ajv` is used solely inside `validators/test/00.invoice-schema.test.ts` to check `schemas/invoice.schema.json` against the fixtures as part of this repo's own test suite; it is not exported for consumers to run JSON Schema validation at runtime. A consumer who needs to validate untyped JSON against the schema before building an `Invoice` supplies their own JSON Schema validator.
 
 **Why:** A zero-dependency library is easier to embed, audit, and trust. Invoice processing is a sensitive domain — every dependency is a supply chain risk. This held even through the Phase 2 XML adapter: `adapters/xrechnung.ts` serializes UBL 2.1 XML directly rather than pulling in an XML-builder library. Runtime dependencies will only be added when genuinely necessary going forward.
 
@@ -202,7 +203,7 @@ The engine has zero production dependencies. All dependencies (`ajv`, `vitest`, 
 
 ### VAT rate for category "S" is restricted to 19%/7%
 
-Category "S" (standard rate) only accepts the current German standard (19%) and reduced (7%) rates — `validators/rules/vat-rate.ts`'s `STANDARD_VAT_RATES`.
+Category "S" (standard rate) only accepts the current German standard (19%) and reduced (7%) rates — `validators/rules/17.vat-rate.ts`'s `STANDARD_VAT_RATES`.
 
 **Why:** The engine targets current German invoicing. Historical rates (Germany's COVID-era 16%/5%, July–December 2020) and other EU member states' EN 16931 rates are not validated today. Broader rate support is a documented future extension, not current behavior — see `docs/LIMITATIONS.md` — and would require widening `STANDARD_VAT_RATES` plus corresponding fixtures.
 
