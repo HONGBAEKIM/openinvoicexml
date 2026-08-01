@@ -122,6 +122,21 @@ export function mapDelivery(delivery: NonNullable<Invoice["delivery"]>): Deliver
   };
 }
 
+// Output type
+export interface PrecedingInvoiceReferenceFields {
+  id: string;
+  issueDate: string;
+}
+
+export function mapPrecedingInvoiceReference(
+  // Input type
+  ref: NonNullable<Invoice["precedingInvoiceReference"]>,
+  // Output tyee
+): PrecedingInvoiceReferenceFields {
+  // Actual returned output
+  return { id: ref.id, issueDate: ref.issueDate };
+}
+
 export interface DocumentFields {
   id: string;
   typeCode: string;
@@ -131,6 +146,7 @@ export interface DocumentFields {
   businessProcessType: string;
   note?: string | undefined;
   buyerReference?: string | undefined;
+  precedingInvoiceReference?: PrecedingInvoiceReferenceFields | undefined;
   seller: PartyFields;
   buyer: PartyFields;
   delivery?: DeliveryFields | undefined;
@@ -161,6 +177,9 @@ export function mapInvoice(invoice: Invoice): DocumentFields {
     businessProcessType: invoice.businessProcessType,
     note: invoice.note,
     buyerReference: invoice.buyerReference,
+    precedingInvoiceReference: invoice.precedingInvoiceReference
+      ? mapPrecedingInvoiceReference(invoice.precedingInvoiceReference)
+      : undefined,
     seller: mapParty(invoice.seller),
     buyer: mapParty(invoice.buyer),
     delivery: invoice.delivery ? mapDelivery(invoice.delivery) : undefined,

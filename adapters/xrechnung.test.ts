@@ -115,6 +115,53 @@ describe("toXRechnung", () => {
     });
   });
 
+  describe("cac:BillingReference (BT-25/BT-26)", () => {
+    it("omits cac:BillingReference when precedingInvoiceReference is absent", () => {
+      const xml = toXRechnung(domesticSimple as unknown as Invoice);
+      expect(xml).not.toContain("<cac:BillingReference>");
+    });
+
+    it("renders cac:BillingReference/cac:InvoiceDocumentReference with ID and IssueDate when present", () => {
+      const invoice: Invoice = {
+        ...(domesticSimple as unknown as Invoice),
+        typeCode: "381",
+        precedingInvoiceReference: { id: "INV-2025-001", issueDate: "2025-12-01" },
+      };
+      const xml = toXRechnung(invoice);
+      const start = xml.indexOf("<cac:BillingReference>");
+      const end = xml.indexOf("</cac:BillingReference>") + "</cac:BillingReference>".length;
+      const billingReference = xml.slice(start, end);
+
+      expect(billingReference).toContain("<cac:InvoiceDocumentReference>");
+      expect(billingReference).toContain("<cbc:ID>INV-2025-001</cbc:ID>");
+      expect(billingReference).toContain("<cbc:IssueDate>2025-12-01</cbc:IssueDate>");
+    });
+
+    it("places cac:BillingReference before cac:AccountingSupplierParty (UBL 2.1 element order)", () => {
+      const invoice: Invoice = {
+        ...(domesticSimple as unknown as Invoice),
+        precedingInvoiceReference: { id: "INV-2025-001", issueDate: "2025-12-01" },
+      };
+      const xml = toXRechnung(invoice);
+      // checks order with indexOf
+      expect(xml.indexOf("<cac:BillingReference>")).toBeLessThan(
+        xml.indexOf("<cac:AccountingSupplierParty>"),
+      );
+    });
+
+    it("escapes special characters in the preceding invoice ID but not the issue date", () => {
+      const invoice: Invoice = {
+        ...(domesticSimple as unknown as Invoice),
+        precedingInvoiceReference: { id: "INV&2025<001", issueDate: "2025-12-01" },
+      };
+      const xml = toXRechnung(invoice);
+      // &  becomes  &amp;
+      // <  becomes  &lt;
+      expect(xml).toContain("<cbc:ID>INV&amp;2025&lt;001</cbc:ID>");
+      expect(xml).toContain("<cbc:IssueDate>2025-12-01</cbc:IssueDate>");
+    });
+  });
+
   describe("VAT category 'O' (outside the scope of VAT)", () => {
     it("omits the line-level VAT Percent element (BR-O-05)", () => {
       const invoice = { ...(domesticSimple as unknown as Invoice) };

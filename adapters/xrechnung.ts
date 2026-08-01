@@ -7,6 +7,7 @@ import {
   type VatSubtotalFields,
   type LineFields,
   type DeliveryFields,
+  type PrecedingInvoiceReferenceFields,
 } from "./xrechnung-mapping.js";
 
 /**
@@ -14,6 +15,15 @@ import {
  * UBL 2.1 markup. Escaping and tag/element structure live here; no field defaulting or
  * derivation belongs in this file.
  */
+
+function renderBillingReference(ref: PrecedingInvoiceReferenceFields): string {
+  return `  <cac:BillingReference>
+    <cac:InvoiceDocumentReference>
+      <cbc:ID>${esc(ref.id)}</cbc:ID>
+      <cbc:IssueDate>${ref.issueDate}</cbc:IssueDate>
+    </cac:InvoiceDocumentReference>
+  </cac:BillingReference>`;
+}
 
 function renderParty(wrapperTag: string, party: PartyFields): string {
   const line2 = party.addressLine2
@@ -140,6 +150,9 @@ export function toXRechnung(invoice: Invoice): string {
   const buyerRef = fields.buyerReference
     ? `\n  <cbc:BuyerReference>${esc(fields.buyerReference)}</cbc:BuyerReference>`
     : "";
+  const billingReference = fields.precedingInvoiceReference
+    ? `\n${renderBillingReference(fields.precedingInvoiceReference)}`
+    : "";
   const delivery = fields.delivery ? `\n${renderDelivery(fields.delivery)}` : "";
   const paymentMeans = fields.paymentMeans ? `\n${renderPaymentMeans(fields.paymentMeans)}` : "";
   const dueDate = fields.dueDate ? `\n  <cbc:DueDate>${fields.dueDate}</cbc:DueDate>` : "";
@@ -166,7 +179,7 @@ export function toXRechnung(invoice: Invoice): string {
   <cbc:ID>${esc(fields.id)}</cbc:ID>
   <cbc:IssueDate>${fields.issueDate}</cbc:IssueDate>${dueDate}
   <cbc:InvoiceTypeCode>${fields.typeCode}</cbc:InvoiceTypeCode>${note}
-  <cbc:DocumentCurrencyCode>${currency}</cbc:DocumentCurrencyCode>${buyerRef}
+  <cbc:DocumentCurrencyCode>${currency}</cbc:DocumentCurrencyCode>${buyerRef}${billingReference}
 ${renderParty("cac:AccountingSupplierParty", fields.seller)}
 ${renderParty("cac:AccountingCustomerParty", fields.buyer)}${delivery}${paymentMeans}
   <cac:TaxTotal>

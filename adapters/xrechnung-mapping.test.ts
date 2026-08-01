@@ -6,6 +6,7 @@ import {
   mapVatSubtotal,
   mapLine,
   mapInvoice,
+  mapPrecedingInvoiceReference,
 } from "./xrechnung-mapping.js";
 import type { Invoice, Party } from "../core/index.js";
 
@@ -90,6 +91,13 @@ describe("mapLine", () => {
   });
 });
 
+describe("mapPrecedingInvoiceReference", () => {
+  it("carries id/issueDate through unchanged", () => {
+    const fields = mapPrecedingInvoiceReference({ id: "INV-100", issueDate: "2026-01-15" });
+    expect(fields).toEqual({ id: "INV-100", issueDate: "2026-01-15" });
+  });
+});
+
 describe("mapInvoice", () => {
   it("derives lineExtensionAmount as the sum of all line amounts", () => {
     const invoice = domesticSimple as unknown as Invoice;
@@ -112,5 +120,21 @@ describe("mapInvoice", () => {
     const fields = mapInvoice(invoice);
     expect(fields.seller.name).toBe(invoice.seller.name);
     expect(fields.buyer.name).toBe(invoice.buyer.name);
+  });
+
+  it("maps precedingInvoiceReference to undefined when absent from the invoice", () => {
+    const invoice = domesticSimple as unknown as Invoice;
+    expect(mapInvoice(invoice).precedingInvoiceReference).toBeUndefined();
+  });
+
+  it("maps precedingInvoiceReference when present", () => {
+    const invoice: Invoice = {
+      ...(domesticSimple as unknown as Invoice),
+      precedingInvoiceReference: { id: "INV-2025-001", issueDate: "2025-12-01" },
+    };
+    expect(mapInvoice(invoice).precedingInvoiceReference).toEqual({
+      id: "INV-2025-001",
+      issueDate: "2025-12-01",
+    });
   });
 });
