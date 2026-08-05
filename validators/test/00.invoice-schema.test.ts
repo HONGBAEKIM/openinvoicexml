@@ -33,6 +33,18 @@ const fixtures: [string, Invoice][] = [
   ["domestic-multi-line", multiLineFixture],
 ];
 
+/**
+ * What's tested here (schemas/invoice.schema.json, via AJV):
+ *
+ * | Describe block                    | Fixture(s)                           | Checks                                                                                        |
+ * |------------------------------------|----------------------------------------|--------------------------------------------------------------------------------------------------|
+ * | valid fixtures                     | domestic-simple, domestic-multi-line   | both fixtures pass schema validation as-is                                                       |
+ * | required field enforcement         | both (via describe.each)               | id/issueDate/seller/buyer required; lines/vatBreakdowns can't be empty                            |
+ * | type and format enforcement        | both                                   | typeCode, issueDate format, currencyCode case, vatRate range, countryCode length, vatCategoryCode |
+ * | additionalProperties enforcement   | both                                   | unknown top-level and line-item fields rejected (additionalProperties: false)                    |
+ * | delivery (BG-13/BG-15)             | both                                   | nested deliverTo shape required; old flat delivery fields rejected; countryCode mandatory         |
+ * | multi-line specific checks         | domestic-multi-line only               | schema violations on non-first lines (index 1, 2) are caught too, not just line 0                 |
+ */
 describe("Invoice JSON Schema", () => {
   let validate: ValidateFunction;
 
