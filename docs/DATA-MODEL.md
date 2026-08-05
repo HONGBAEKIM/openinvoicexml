@@ -133,6 +133,18 @@ Source for the BT numbers and their EN 16931/XRechnung basis below: [en16931], [
 
 BT-9 maps to the plain root-level `cbc:DueDate` element — **not** `cac:PaymentMeans/cbc:PaymentDueDate` or `cac:PaymentTerms/cbc:PaymentDueDate`. Both of those are explicitly discouraged by this EN 16931 profile's own Schematron (`UBL-CR-412` / `UBL-CR-463` in `tools/kosit/config/resources/ubl/2.1/xsl/EN16931-UBL-validation.xsl` — both say "a UBL invoice should not include" those elements). `BR-CO-25` itself checks for `//cbc:DueDate` (or `BT-20` payment terms) whenever the amount due is positive. `adapters/xrechnung.ts` already emits the correct root-level `<cbc:DueDate>` next to `<cbc:IssueDate>` — this row previously described the wrong element, but the generator itself was already correct.
 
+**Credit notes (`typeCode` `381`) are a different UBL document type, not an `Invoice` variant.** Per
+`UBL-CreditNote-2.1.xsd`, BT-3 is `cbc:CreditNoteTypeCode` under a `ubl:CreditNote` root
+(`urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2` namespace), not `cbc:InvoiceTypeCode`
+under `ubl:Invoice` — `381` is not a legal `InvoiceTypeCode` value at all (`BR-CL-01`). `CreditNoteType`
+also has **no `cbc:DueDate` element** in its schema, so BT-9 is never included for a `381` document
+even if `dueDate` is set on the `Invoice` object — a credit reduces what's owed, it doesn't create a
+new payment deadline. `adapters/xrechnung.ts` branches on `typeCode === "381"` to switch the root
+element/namespace, type-code element, and (see below) the line-item wrapper; everything else
+(parties, totals, VAT breakdown, `BillingReference`) is shared structure between the two document
+types. See `tools/kosit/config/scenarios.xml`'s "EN16931 XRechnung (UBL CreditNote)" scenario, which
+validates against this exact root/namespace.
+
 `precedingInvoiceReference` renders only when present — a plain invoice (`380`) never needs it. `cac:BillingReference` is a repeatable group with several optional children in the UBL schema, but this project emits only `cac:InvoiceDocumentReference/cbc:ID` and `.../cbc:IssueDate`: `BR-55` (fatal, in `tools/kosit/config/resources/ubl/2.1/xsl/EN16931-UBL-validation.xsl`) requires `cbc:ID` whenever `cac:BillingReference` is present at all, while `UBL-CR-023` through `UBL-CR-026` (warnings) discourage including `CopyIndicator`, `UUID`, `IssueTime`, `DocumentTypeCode`, or `DocumentType` in this block.
 
 ### Seller (BG-4)
@@ -231,6 +243,11 @@ Source: [en16931].
 ### Invoice lines (BG-25)
 
 One `cac:InvoiceLine` per entry in `lines`. Source: [en16931].
+
+For a credit note (`typeCode` `381`), each line is `cac:CreditNoteLine` instead, and BT-129 (the
+quantity element) is `cbc:CreditedQuantity` instead of `cbc:InvoicedQuantity` — per
+`UBL-CreditNote-2.1.xsd`'s `CreditNoteLineType`. Everything else in the line-item table below is
+identical between the two document types.
 
 | BT     | Name                 | Internal field                    | Legal basis           | UBL element                                      |
 | ------ | ---------------------- | ------------------------------------ | ----------------------- | --------------------------------------------------- |

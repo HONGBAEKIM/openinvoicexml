@@ -14,6 +14,7 @@ import intraEuSupply from "../fixtures/08.intra-eu-supply.invoice.json" with { t
 import exportInvoice from "../fixtures/09.export.invoice.json" with { type: "json" };
 import reverseChargeConstruction from "../fixtures/10.reverse-charge-construction.invoice.json" with { type: "json" };
 import reverseChargeScrapMetal from "../fixtures/11.reverse-charge-scrap-metal.invoice.json" with { type: "json" };
+import creditNoteFull from "../fixtures/16.credit-note-full.invoice.json" with { type: "json" };
 
 const fixtures: [string, unknown][] = [
   ["domestic-simple", domesticSimple],
@@ -173,6 +174,51 @@ describe("toXRechnung", () => {
 
       expect(classifiedTaxCategory).toContain("<cbc:ID>O</cbc:ID>");
       expect(classifiedTaxCategory).not.toContain("<cbc:Percent>");
+    });
+  });
+
+  describe("UBL document type by typeCode (Invoice vs CreditNote)", () => {
+    it("renders ubl:Invoice / Invoice-2 namespace and cbc:InvoiceTypeCode for typeCode 380", () => {
+      const xml = toXRechnung(domesticSimple as unknown as Invoice);
+      expect(xml).toContain("<ubl:Invoice");
+      expect(xml).toContain('xmlns:ubl="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"');
+      expect(xml).toContain("<cbc:InvoiceTypeCode>380</cbc:InvoiceTypeCode>");
+      expect(xml).toContain("</ubl:Invoice>");
+    });
+
+    it("renders ubl:CreditNote / CreditNote-2 namespace and cbc:CreditNoteTypeCode for typeCode 381", () => {
+      const xml = toXRechnung(creditNoteFull as unknown as Invoice);
+      expect(xml).toContain("<ubl:CreditNote");
+      expect(xml).toContain(
+        'xmlns:ubl="urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2"',
+      );
+      expect(xml).toContain("<cbc:CreditNoteTypeCode>381</cbc:CreditNoteTypeCode>");
+      expect(xml).not.toContain("<cbc:InvoiceTypeCode>");
+      expect(xml).toContain("</ubl:CreditNote>");
+    });
+
+    it("uses cac:CreditNoteLine and cbc:CreditedQuantity, not cac:InvoiceLine, for a credit note", () => {
+      const xml = toXRechnung(creditNoteFull as unknown as Invoice);
+      expect(xml).toContain("<cac:CreditNoteLine>");
+      expect(xml).toContain('<cbc:CreditedQuantity unitCode="HUR">-8</cbc:CreditedQuantity>');
+      expect(xml).not.toContain("<cac:InvoiceLine>");
+      expect(xml).not.toContain("InvoicedQuantity");
+    });
+
+    it("omits cbc:DueDate for a credit note even when dueDate is set (CreditNoteType has no such element)", () => {
+      const invoice: Invoice = {
+        ...(creditNoteFull as unknown as Invoice),
+        dueDate: "2026-07-20",
+      };
+      const xml = toXRechnung(invoice);
+      expect(xml).not.toContain("<cbc:DueDate>");
+    });
+
+    it("still renders typeCode 384 (corrective invoice) as ubl:Invoice, not CreditNote", () => {
+      const invoice: Invoice = { ...(domesticSimple as unknown as Invoice), typeCode: "384" };
+      const xml = toXRechnung(invoice);
+      expect(xml).toContain("<ubl:Invoice");
+      expect(xml).toContain("<cbc:InvoiceTypeCode>384</cbc:InvoiceTypeCode>");
     });
   });
 

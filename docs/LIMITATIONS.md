@@ -242,14 +242,15 @@ generation.
 
 ### XML (XRechnung UBL 2.1) — implemented, tested against KoSIT
 
-`adapters/xrechnung.ts` (Week 5) generates UBL 2.1 XML for all 15 current fixtures, and
+`adapters/xrechnung.ts` (Week 5) generates UBL 2.1 XML for all 18 current fixtures, and
 `validators/test/90.kosit.test.ts` (run via `npm test`) confirms zero KoSIT `error`-severity
 findings for each. Passing fixtures demonstrate coverage of those specific examples, not
 that every document the adapter can produce will pass KoSIT; see
 [`COMPLIANCE.md`](COMPLIANCE.md#validating-xrechnung-output). §13b subcase-specific business-rule
 enforcement (beyond the generic VAT category/rate checks) landed incrementally through Week 9 —
-see the §13b section above for exactly which subcases have fixtures. Legal scenarios beyond the
-current 15 fixtures (credit notes, down payments, etc.) remain **Phase 3**.
+see the §13b section above for exactly which subcases have fixtures. Credit notes (`381`) and
+corrective invoices (`384`) landed in Week 10 — see below. Legal scenarios beyond the current 18
+fixtures (down payments, mixed VAT rates, etc.) remain **Phase 3**.
 
 ### Hybrid PDF/A-3 (Factur-X / ZUGFeRD) — not yet implemented
 
@@ -259,13 +260,43 @@ Hybrid export is the deliverable of **Phase 4** (Weeks 13–16).
 
 ## Legal Scenarios
 
+### Credit notes (document type 381) — implemented Week 10
+
+`typeCode: "381"` is fully supported: `checkCreditNoteAndCorrectionRequirements`
+(`validators/rules/10.credit-note.ts`) enforces `duePayableAmount <= 0` and requires
+`precedingInvoiceReference` (BT-25/BT-26); `adapters/xrechnung.ts` renders a proper UBL
+**`CreditNote`** document (`CreditNote-2` namespace, `cbc:CreditNoteTypeCode`,
+`cac:CreditNoteLine`/`cbc:CreditedQuantity`) rather than an `Invoice` with type code `381` —
+`381` isn't a legal `InvoiceTypeCode` value per `BR-CL-01`, it's a distinct UBL document type.
+See `docs/DATA-MODEL.md`'s "Other invoice-level fields" section for the schema differences
+(no `cbc:DueDate` on `CreditNoteType`, etc.). Two fixtures cover this: `16.credit-note-full` (full
+reversal of an invoice) and `17.credit-note-partial` (only some line items credited); both pass
+KoSIT with zero errors.
+
+**Deferred:** no tooling validates a credit note's amounts against the invoice it references —
+`precedingInvoiceReference` is just an `{id, issueDate}` pointer, not a live link to the original
+`Invoice` object, so nothing catches e.g. a credit note crediting more than the original invoice's
+total. This would need cross-document validation, out of scope for the current single-document
+`generateInvoice()` pipeline.
+
+### Corrective invoices (document type 384) — implemented Week 10
+
+`typeCode: "384"` requires `precedingInvoiceReference` (same rule as `381`, but without the
+non-positive-amount constraint, since a correction can add to, reduce, or leave unchanged what's
+owed). Unlike `381`, `384` remains a UBL `Invoice` document — it's a legal `InvoiceTypeCode` value,
+so no separate document-type rendering was needed. Fixture: `18.corrective-invoice`, which bills
+only the changed line item (hours mistakenly omitted from the original invoice), not a full copy
+of it.
+
+**Deferred:** as with credit notes, "only the changed lines are present" is a fixture-authoring
+convention, not something the schema or a validator enforces — the internal `Invoice` type has no
+concept of "the original document" to diff against.
+
 The following scenarios are known and planned but not yet implemented:
 
 | Scenario                                                                                                                                       | Planned phase |
 | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
 | §13b UStG reverse charge subcases beyond construction/scrap-and-waste/security-transfer/cleaning/mobile-devices/gas-and-electricity (fixtures) | Phase 3       |
-| Credit notes (document type 381)                                                                                                               | Phase 3       |
-| Corrective invoices (document type 384)                                                                                                        | Phase 3       |
 | Down payment / final invoices                                                                                                                  | Phase 3       |
 | Mixed VAT rates on a single invoice                                                                                                            | Phase 3       |
 
@@ -274,7 +305,7 @@ The following scenarios are known and planned but not yet implemented:
 ## Validator Integration
 
 KoSIT validator integration landed in **Phase 2, Week 6** (`validators/90.kosit.ts`, `make
-validate-kosit`) — see [`COMPLIANCE.md`](COMPLIANCE.md#validating-xrechnung-output) for setup and usage. All 15 current
+validate-kosit`) — see [`COMPLIANCE.md`](COMPLIANCE.md#validating-xrechnung-output) for setup and usage. All 18 current
 fixtures pass with zero `error`-severity findings, verified via `validators/test/90.kosit.test.ts`
 as part of `npm test`.
 
@@ -294,7 +325,7 @@ XML — for callers who validate separately or via their own pipeline.
 
 ### Accepted KoSIT notices
 
-- **`BR-DE-TMP-32`** (severity: `information`, not blocking) — 13 of the 15 current fixtures
+- **`BR-DE-TMP-32`** (severity: `information`, not blocking) — 16 of the 18 current fixtures
   omit a delivery/service date (`export` and `intra-eu-supply` populate `actualDeliveryDate`;
   `intra-eu-supply` needs it regardless, per `BR-IC-11` below), even though BT-72 "Actual
   delivery date" is supported by this implementation; the other fixtures simply don't populate

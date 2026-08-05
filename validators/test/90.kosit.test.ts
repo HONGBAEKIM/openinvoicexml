@@ -29,6 +29,9 @@ import reverseChargeSecurityTransfer from "../../fixtures/12.reverse-charge-secu
 import reverseChargeCleaning from "../../fixtures/13.reverse-charge-cleaning.invoice.json" with { type: "json" };
 import reverseChargeMobileDevices from "../../fixtures/14.reverse-charge-mobile-devices.invoice.json" with { type: "json" };
 import reverseChargeGasAndElectricity from "../../fixtures/15.reverse-charge-gas-and-electricity.invoice.json" with { type: "json" };
+import creditNoteFull from "../../fixtures/16.credit-note-full.invoice.json" with { type: "json" };
+import creditNotePartial from "../../fixtures/17.credit-note-partial.invoice.json" with { type: "json" };
+import correctiveInvoice from "../../fixtures/18.corrective-invoice.invoice.json" with { type: "json" };
 
 const fixtures: [string, unknown][] = [
   ["domestic-simple", domesticSimple],
@@ -46,6 +49,9 @@ const fixtures: [string, unknown][] = [
   ["reverse-charge-cleaning", reverseChargeCleaning],
   ["reverse-charge-mobile-devices", reverseChargeMobileDevices],
   ["reverse-charge-gas-and-electricity", reverseChargeGasAndElectricity],
+  ["credit-note-full", creditNoteFull],
+  ["credit-note-partial", creditNotePartial],
+  ["corrective-invoice", correctiveInvoice],
 ];
 
 const JAVA_BIN = existsSync("tools/jre/bin/java") ? "tools/jre/bin/java" : "java";
@@ -75,6 +81,19 @@ afterAll(() => {
   rmSync(workDir, { recursive: true, force: true });
 });
 
+/**
+ * What's tested here (real KoSIT validator — XSD + Schematron, via the Java jar):
+ *
+ * - One test per current fixture (all 18 in `fixtures` above): generates XML via
+ *   toXRechnung() and confirms KoSIT reports zero error-severity findings — the strongest
+ *   check available, since it's the same validator XRechnung recipients actually run.
+ * - One negative control ("rejects an invoice missing mandatory fields"): a deliberately
+ *   incomplete document is confirmed to fail, proving this harness actually catches errors
+ *   rather than rubber-stamping anything handed to it.
+ *
+ * Skipped entirely (not failed) when Java or the KoSIT jar aren't available locally — see
+ * `kositAvailable()` above.
+ */
 // if Java isn't installed, tests are skipped instead of failing.
 describe.skipIf(!available)("runKosit", () => {
   describe.each(fixtures)("%s", (label, fixture) => {

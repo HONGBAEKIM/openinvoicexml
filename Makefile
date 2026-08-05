@@ -12,9 +12,11 @@ lint:
 
 generate:
 	node --input-type=module <<'EOF'
-	import { readFileSync, writeFileSync, mkdirSync } from "fs";
+	import { readFileSync, readdirSync, writeFileSync, mkdirSync } from "fs";
 	import { toXRechnung } from "./dist/adapters/index.js";
-	const names = ["domestic-simple","domestic-multi-line","reduced-rate","exempt","zero-rated","reverse-charge","small-business","intra-eu-supply","export","reverse-charge-construction","reverse-charge-scrap-metal","reverse-charge-security-transfer","reverse-charge-cleaning","reverse-charge-mobile-devices","reverse-charge-gas-and-electricity"];
+	const names = readdirSync("fixtures")
+	  .filter(f => f.endsWith(".invoice.json"))
+	  .map(f => f.slice(0, -".invoice.json".length));
 	mkdirSync("dist/xml", { recursive: true });
 	for (const n of names) {
 	  const inv = JSON.parse(readFileSync("fixtures/" + n + ".invoice.json", "utf8"));

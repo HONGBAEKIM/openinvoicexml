@@ -116,7 +116,7 @@ function renderVatSubtotal(bd: VatSubtotalFields, currency: string): string {
     </cac:TaxSubtotal>`;
 }
 
-function renderLine(line: LineFields, currency: string): string {
+function renderLine(line: LineFields, currency: string, isCreditNote: boolean): string {
   const description = line.description
     ? `\n      <cbc:Description>${esc(line.description)}</cbc:Description>`
     : "";
@@ -124,10 +124,15 @@ function renderLine(line: LineFields, currency: string): string {
   // carry an item VAT rate at all — not even 0.
   const percent =
     line.vatCategoryCode === "O" ? "" : `\n        <cbc:Percent>${line.vatRate}</cbc:Percent>`;
+  // UBL (Universal Business Language) models credit note lines 
+  // as cac:CreditNoteLine/cbc:CreditedQuantity, distinct from
+  // cac:InvoiceLine/cbc:InvoicedQuantity used by every other document type.
+  const lineTag = isCreditNote ? "CreditNoteLine" : "InvoiceLine";
+  const quantityTag = isCreditNote ? "CreditedQuantity" : "InvoicedQuantity";
 
-  return `  <cac:InvoiceLine>
+  return `  <cac:${lineTag}>
     <cbc:ID>${esc(line.id)}</cbc:ID>
-    <cbc:InvoicedQuantity unitCode="${esc(line.unitCode)}">${line.quantity}</cbc:InvoicedQuantity>
+    <cbc:${quantityTag} unitCode="${esc(line.unitCode)}">${line.quantity}</cbc:${quantityTag}>
     <cbc:LineExtensionAmount currencyID="${currency}">${amt(line.lineAmount)}</cbc:LineExtensionAmount>
     <cac:Item>${description}
       <cbc:Name>${esc(line.name)}</cbc:Name>
@@ -139,12 +144,24 @@ function renderLine(line: LineFields, currency: string): string {
     <cac:Price>
       <cbc:PriceAmount currencyID="${currency}">${amt(line.unitPrice)}</cbc:PriceAmount>
     </cac:Price>
-  </cac:InvoiceLine>`;
+  </cac:${lineTag}>`;
 }
 
 export function toXRechnung(invoice: Invoice): string {
   const fields = mapInvoice(invoice);
   const currency = fields.currencyCode;
+
+  // A credit note (381) is its own UBL document type — CreditNote-2, not Invoice-2 — with a
+  // cbc:CreditNoteTypeCode instead of cbc:InvoiceTypeCode and cac:CreditNoteLine instead of
+  // cac:InvoiceLine. Everything else (parties, totals, VAT breakdown, BillingReference) is
+  // shared structure. See tools/kosit/config/scenarios.xml's "EN16931 XRechnung (UBL
+  // CreditNote)" scenario, which matches on this exact root/namespace.
+  const isCreditNote = fields.typeCode === "381";
+  const rootTag = isCreditNote ? "CreditNote" : "Invoice";
+  const namespace = isCreditNote
+    ? "urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2"
+    : "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2";
+  const typeCodeTag = isCreditNote ? "CreditNoteTypeCode" : "InvoiceTypeCode";
 
   const note = fields.note ? `\n  <cbc:Note>${esc(fields.note)}</cbc:Note>` : "";
   const buyerRef = fields.buyerReference
@@ -155,7 +172,10 @@ export function toXRechnung(invoice: Invoice): string {
     : "";
   const delivery = fields.delivery ? `\n${renderDelivery(fields.delivery)}` : "";
   const paymentMeans = fields.paymentMeans ? `\n${renderPaymentMeans(fields.paymentMeans)}` : "";
-  const dueDate = fields.dueDate ? `\n  <cbc:DueDate>${fields.dueDate}</cbc:DueDate>` : "";
+  // CreditNoteType has no cbc:DueDate element at all (UBL-CreditNote-2.1.xsd) — a credit
+  // reduces what's owed, it doesn't create a new payment deadline.
+  const dueDate =
+    !isCreditNote && fields.dueDate ? `\n  <cbc:DueDate>${fields.dueDate}</cbc:DueDate>` : "";
 
   const lineExtension = amt(fields.lineExtensionAmount);
   // Converting each VAT breakdown into XML
@@ -163,22 +183,22 @@ export function toXRechnung(invoice: Invoice): string {
   // vat1, vat2 -> xml1, xml2
   const vatSubtotals = fields.vatSubtotals.map((bd) => renderVatSubtotal(bd, currency)).join("\n");
 
-  // for each invoice line(items), generate one <cac:InvoiceLine> xml element
-  const invoiceLines = fields.lines.map((l) => renderLine(l, currency)).join("\n");
+  // for each invoice line(items), generate one <cac:InvoiceLine>/<cac:CreditNoteLine> xml element
+  const invoiceLines = fields.lines.map((l) => renderLine(l, currency, isCreditNote)).join("\n");
 
   // ubl = the overall document.
   // cac = complex "object-like" structures.
   // cbc = simple data values inside those structures.
   return `<?xml version="1.0" encoding="UTF-8"?>
-<ubl:Invoice
-  xmlns:ubl="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
+<ubl:${rootTag}
+  xmlns:ubl="${namespace}"
   xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
   xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
   <cbc:CustomizationID>urn:cen.eu:en16931:2017#compliant#urn:xeinkauf.de:kosit:xrechnung_3.0</cbc:CustomizationID>
   <cbc:ProfileID>${esc(fields.businessProcessType)}</cbc:ProfileID>
   <cbc:ID>${esc(fields.id)}</cbc:ID>
   <cbc:IssueDate>${fields.issueDate}</cbc:IssueDate>${dueDate}
-  <cbc:InvoiceTypeCode>${fields.typeCode}</cbc:InvoiceTypeCode>${note}
+  <cbc:${typeCodeTag}>${fields.typeCode}</cbc:${typeCodeTag}>${note}
   <cbc:DocumentCurrencyCode>${currency}</cbc:DocumentCurrencyCode>${buyerRef}${billingReference}
 ${renderParty("cac:AccountingSupplierParty", fields.seller)}
 ${renderParty("cac:AccountingCustomerParty", fields.buyer)}${delivery}${paymentMeans}
@@ -193,5 +213,5 @@ ${vatSubtotals}
     <cbc:PayableAmount currencyID="${currency}">${amt(fields.duePayableAmount)}</cbc:PayableAmount>
   </cac:LegalMonetaryTotal>
 ${invoiceLines}
-</ubl:Invoice>`;
+</ubl:${rootTag}>`;
 }
