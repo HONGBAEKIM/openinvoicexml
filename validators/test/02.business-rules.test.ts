@@ -20,8 +20,9 @@ import reverseChargeMobileDevices from "../../fixtures/14.reverse-charge-mobile-
 import reverseChargeGasAndElectricity from "../../fixtures/15.reverse-charge-gas-and-electricity.invoice.json" with { type: "json" };
 import creditNoteFull from "../../fixtures/16.credit-note-full.invoice.json" with { type: "json" };
 import creditNotePartial from "../../fixtures/17.credit-note-partial.invoice.json" with { type: "json" };
+import correctiveInvoice from "../../fixtures/18.corrective-invoice.invoice.json" with { type: "json" };
 
-// Fixture labels are numbered (1-17) to match the "Valid fixtures" table in the doc
+// Fixture labels are numbered (1-18) to match the "Valid fixtures" table in the doc
 // comment below — the number shows up in the test runner's output for each fixture.
 const fixtures: [string, unknown][] = [
   ["1. domestic-simple (19% S)", domesticSimple],
@@ -41,6 +42,7 @@ const fixtures: [string, unknown][] = [
   ["15. reverse-charge-gas-and-electricity (AE)", reverseChargeGasAndElectricity],
   ["16. credit-note-full (381)", creditNoteFull],
   ["17. credit-note-partial (381)", creditNotePartial],
+  ["18. corrective-invoice (384)", correctiveInvoice],
 ];
 
 /** Deep-clones a fixture so mutations in one test don't leak into others. */
@@ -51,7 +53,7 @@ function clone<T>(fixture: T): T {
 /**
  * What's tested here (full business-rule validation pipeline):
  *
- * Every test below is numbered 1-40, in the same top-to-bottom order they appear in the
+ * Every test below is numbered 1-41, in the same top-to-bottom order they appear in the
  * file, so a row here can be matched to its `it(...)` by searching for "N." in either
  * place — useful if you didn't write this file and the describe/it nesting alone isn't
  * enough to navigate by.
@@ -77,71 +79,72 @@ function clone<T>(fixture: T): T {
  * | 15 | reverse-charge-gas-and-electricity   | AE           | no errors        |
  * | 16 | credit-note-full                     | S (19%)      | no errors        |
  * | 17 | credit-note-partial                  | S (19%)      | no errors        |
+ * | 18 | corrective-invoice                   | S (19%)      | no errors        |
  *
  * VAT rate and category rules
  *
  * | #  | Test case                                      | Expected issue                |
  * |----|-------------------------------------------------|-------------------------------|
- * | 18 | Category S line has a 0% VAT rate              | VAT_RATE_INVALID_FOR_CATEGORY |
- * | 19 | Reduced-rate category S line has a 0% rate     | VAT_RATE_INVALID_FOR_CATEGORY |
- * | 20 | Category S line uses a rate other than 19%/7%  | VAT_RATE_INVALID_FOR_CATEGORY |
- * | 21 | Category Z line has a positive VAT rate        | VAT_RATE_INVALID_FOR_CATEGORY |
- * | 22 | VAT breakdown rate doesn't match a line rate   | VAT_BREAKDOWN_RATE_MISMATCH   |
+ * | 19 | Category S line has a 0% VAT rate              | VAT_RATE_INVALID_FOR_CATEGORY |
+ * | 20 | Reduced-rate category S line has a 0% rate     | VAT_RATE_INVALID_FOR_CATEGORY |
+ * | 21 | Category S line uses a rate other than 19%/7%  | VAT_RATE_INVALID_FOR_CATEGORY |
+ * | 22 | Category Z line has a positive VAT rate        | VAT_RATE_INVALID_FOR_CATEGORY |
+ * | 23 | VAT breakdown rate doesn't match a line rate   | VAT_BREAKDOWN_RATE_MISMATCH   |
  *
  * Monetary amount rules
  *
  * | #  | Test case                                                   | Expected issue               |
  * |----|----------------------------------------------------------------|---------------------------|
- * | 23 | Line amount differs from quantity × unit price              | LINE_AMOUNT_ROUNDING          |
- * | 24 | VAT taxable amount differs from matching line totals        | VAT_TAXABLE_AMOUNT_MISMATCH   |
- * | 25 | VAT amount differs from taxable amount × VAT rate           | VAT_TAX_AMOUNT_ROUNDING       |
- * | 26 | Invoice tax amount differs from summed VAT amounts          | INVOICE_TAX_AMOUNT_MISMATCH   |
- * | 27 | Monetary amount has more than two decimal places            | MONETARY_AMOUNT_DECIMAL_PRECISION |
- * | 28 | Second line in a multi-line invoice has a wrong amount      | LINE_AMOUNT_ROUNDING          |
- * | 29 | Multi-line taxable amount doesn't match summed line amounts | VAT_TAXABLE_AMOUNT_MISMATCH   |
- * | 30 | Reduced-rate 7% VAT amount is calculated incorrectly        | VAT_TAX_AMOUNT_ROUNDING       |
- * | 31 | Zero-rated VAT breakdown has a non-zero tax amount          | VAT_TAX_AMOUNT_ROUNDING       |
+ * | 24 | Line amount differs from quantity × unit price              | LINE_AMOUNT_ROUNDING          |
+ * | 25 | VAT taxable amount differs from matching line totals        | VAT_TAXABLE_AMOUNT_MISMATCH   |
+ * | 26 | VAT amount differs from taxable amount × VAT rate           | VAT_TAX_AMOUNT_ROUNDING       |
+ * | 27 | Invoice tax amount differs from summed VAT amounts          | INVOICE_TAX_AMOUNT_MISMATCH   |
+ * | 28 | Monetary amount has more than two decimal places            | MONETARY_AMOUNT_DECIMAL_PRECISION |
+ * | 29 | Second line in a multi-line invoice has a wrong amount      | LINE_AMOUNT_ROUNDING          |
+ * | 30 | Multi-line taxable amount doesn't match summed line amounts | VAT_TAXABLE_AMOUNT_MISMATCH   |
+ * | 31 | Reduced-rate 7% VAT amount is calculated incorrectly        | VAT_TAX_AMOUNT_ROUNDING       |
+ * | 32 | Zero-rated VAT breakdown has a non-zero tax amount          | VAT_TAX_AMOUNT_ROUNDING       |
  *
  * VAT exemption reason rules
  *
  * | #  | Test case                                             | Expected issue              |
  * |----|----------------------------------------------------------|--------------------------|
- * | 32 | Category E has no exemption reason or reason code     | VAT_EXEMPTION_REASON_REQUIRED   |
- * | 33 | Category S incorrectly has an exemption reason        | VAT_EXEMPTION_REASON_NOT_ALLOWED |
- * | 34 | Category Z incorrectly has an exemption reason        | VAT_EXEMPTION_REASON_NOT_ALLOWED |
+ * | 33 | Category E has no exemption reason or reason code     | VAT_EXEMPTION_REASON_REQUIRED   |
+ * | 34 | Category S incorrectly has an exemption reason        | VAT_EXEMPTION_REASON_NOT_ALLOWED |
+ * | 35 | Category Z incorrectly has an exemption reason        | VAT_EXEMPTION_REASON_NOT_ALLOWED |
  *
  * Place-of-supply rules
  *
  * | #  | Seller | Buyer | Expected result                                     |
  * |----|--------|-------|-------------------------------------------------------|
- * | 35 | DE     | FR    | PLACE_OF_SUPPLY_CROSS_BORDER warning, but no error   |
- * | 36 | DE     | DE    | no PLACE_OF_SUPPLY_CROSS_BORDER warning              |
+ * | 36 | DE     | FR    | PLACE_OF_SUPPLY_CROSS_BORDER warning, but no error   |
+ * | 37 | DE     | DE    | no PLACE_OF_SUPPLY_CROSS_BORDER warning              |
  *
  * Reverse-charge rules
  *
  * | #  | Category | Test case                  | Expected issue                       |
  * |----|----------|-----------------------------|---------------------------------------|
- * | 37 | AE       | Buyer VAT ID is missing    | REVERSE_CHARGE_BUYER_VAT_ID_REQUIRED |
+ * | 38 | AE       | Buyer VAT ID is missing    | REVERSE_CHARGE_BUYER_VAT_ID_REQUIRED |
  *
  * Credit note / corrective invoice rules
  *
  * | #  | Fixture              | Mutation                          | Expected issue                      |
  * |----|-----------------------|-------------------------------------|----------------------------------|
- * | 38 | credit-note-full     | duePayableAmount set positive      | CREDIT_NOTE_POSITIVE_AMOUNT          |
- * | 39 | credit-note-partial  | precedingInvoiceReference removed  | PRECEDING_INVOICE_REFERENCE_REQUIRED |
+ * | 39 | credit-note-full     | duePayableAmount set positive      | CREDIT_NOTE_POSITIVE_AMOUNT          |
+ * | 40 | credit-note-partial  | precedingInvoiceReference removed  | PRECEDING_INVOICE_REFERENCE_REQUIRED |
  *
  * Cross-rule interaction
  *
  * | #  | Test case                                                      | Expected result                                                                     |
  * |----|-------------------------------------------------------------------|-----------------------------------------------------------------------------|
- * | 40 | Intra-EU invoice, deliver-to address present but lacks countryCode | DELIVERY_COUNTRY_REQUIRED reported once via general BR-57; INTRA_EU_SUPPLY_DELIVERY_COUNTRY_REQUIRED absent (no duplicate) |
+ * | 41 | Intra-EU invoice, deliver-to address present but lacks countryCode | DELIVERY_COUNTRY_REQUIRED reported once via general BR-57; INTRA_EU_SUPPLY_DELIVERY_COUNTRY_REQUIRED absent (no duplicate) |
  *
  * Exhaustive edge-case coverage for small-business invoices, outside-scope invoices,
  * intra-EU supplies, delivery addresses, exports, reverse-charge subcases, and credit
  * notes / corrective invoices lives alongside their implementations in
- * validators/rules/*.test.ts. Tests 37-40 above are kept here too (rather than only in
+ * validators/rules/*.test.ts. Tests 38-41 above are kept here too (rather than only in
  * their respective rule-module test files) to confirm each rule is actually wired into
- * validateBusinessRules() and, for 37 and 40, that it interacts correctly with the other
+ * validateBusinessRules() and, for 38 and 41, that it interacts correctly with the other
  * rule modules running in the same pipeline.
  *
  * This file primarily verifies shared rules and confirms that the individual
@@ -149,8 +152,8 @@ function clone<T>(fixture: T): T {
  */
 
 describe("validateBusinessRules", () => {
-  // Tests 1-17 (see the numbered "Valid fixtures" table above) are generated here, one
-  // per fixture in the `fixtures` array above — not as 17 separate it() blocks. The
+  // Tests 1-18 (see the numbered "Valid fixtures" table above) are generated here, one
+  // per fixture in the `fixtures` array above — not as 18 separate it() blocks. The
   // number for each comes from that fixture's label (e.g. "5. zero-rated (Z)"), which
   // vitest substitutes into "%s" below to produce each test's name.
   describe.each(fixtures)("valid fixtures (%s)", (_label, fixture) => {
@@ -163,7 +166,7 @@ describe("validateBusinessRules", () => {
   });
 
   describe("VAT rate & category rules", () => {
-    it("18. flags a category 'S' line with a non-positive VAT rate", () => {
+    it("19. flags a category 'S' line with a non-positive VAT rate", () => {
       const invoice = clone(domesticSimple) as Invoice;
       invoice.lines[0]!.vatRate = 0;
 
@@ -172,7 +175,7 @@ describe("validateBusinessRules", () => {
       expect(issues.some((i) => i.code === "VAT_RATE_INVALID_FOR_CATEGORY")).toBe(true);
     });
 
-    it("19. flags a category 'S' line at 7% with a zero VAT rate", () => {
+    it("20. flags a category 'S' line at 7% with a zero VAT rate", () => {
       const invoice = clone(reducedRate) as Invoice;
       // fail if number >0
       invoice.lines[0]!.vatRate = 0;
@@ -182,7 +185,7 @@ describe("validateBusinessRules", () => {
       expect(issues.some((i) => i.code === "VAT_RATE_INVALID_FOR_CATEGORY")).toBe(true);
     });
 
-    it("20. flags a category 'S' line at a rate outside 19%/7%", () => {
+    it("21. flags a category 'S' line at a rate outside 19%/7%", () => {
       const invoice = clone(domesticSimple) as Invoice;
       // only 19 or 7 are valid; 15 must fail
       invoice.lines[0]!.vatRate = 15;
@@ -192,7 +195,7 @@ describe("validateBusinessRules", () => {
       expect(issues.some((i) => i.code === "VAT_RATE_INVALID_FOR_CATEGORY")).toBe(true);
     });
 
-    it("21. flags a category 'Z' line with a positive VAT rate", () => {
+    it("22. flags a category 'Z' line with a positive VAT rate", () => {
       const invoice = clone(zeroRated) as Invoice;
       // fail with 0
       invoice.lines[0]!.vatRate = 1;
@@ -202,7 +205,7 @@ describe("validateBusinessRules", () => {
       expect(issues.some((i) => i.code === "VAT_RATE_INVALID_FOR_CATEGORY")).toBe(true);
     });
 
-    it("22. flags a VAT breakdown with no matching vat rating", () => {
+    it("23. flags a VAT breakdown with no matching vat rating", () => {
       const invoice = clone(domesticSimple) as Invoice;
       // will be fail with 19
       invoice.vatBreakdowns[0]!.rate = 25;
@@ -214,7 +217,7 @@ describe("validateBusinessRules", () => {
   });
 
   describe("monetary amount rules", () => {
-    it("23. flags a line amount that doesn't match quantity x unit price", () => {
+    it("24. flags a line amount that doesn't match quantity x unit price", () => {
       const invoice = clone(domesticSimple) as Invoice;
       // will be fail with 1000
       invoice.lines[0]!.lineAmount = 999;
@@ -224,7 +227,7 @@ describe("validateBusinessRules", () => {
       expect(issues.some((i) => i.code === "LINE_AMOUNT_ROUNDING")).toBe(true);
     });
 
-    it("24. flags a VAT breakdown taxable amount that doesn't match the summed line amounts", () => {
+    it("25. flags a VAT breakdown taxable amount that doesn't match the summed line amounts", () => {
       const invoice = clone(domesticSimple) as Invoice;
       // will be fail with 1000
       invoice.vatBreakdowns[0]!.taxableAmount = 2000;
@@ -234,7 +237,7 @@ describe("validateBusinessRules", () => {
       expect(issues.some((i) => i.code === "VAT_TAXABLE_AMOUNT_MISMATCH")).toBe(true);
     });
 
-    it("25. flags a VAT breakdown tax amount that doesn't match taxable amount x rate", () => {
+    it("26. flags a VAT breakdown tax amount that doesn't match taxable amount x rate", () => {
       const invoice = clone(domesticSimple) as Invoice;
       // will be fail with 190
       invoice.vatBreakdowns[0]!.taxAmount = 100;
@@ -244,7 +247,7 @@ describe("validateBusinessRules", () => {
       expect(issues.some((i) => i.code === "VAT_TAX_AMOUNT_ROUNDING")).toBe(true);
     });
 
-    it("26. flags an invoice tax amount that doesn't match the summed VAT breakdown amounts", () => {
+    it("27. flags an invoice tax amount that doesn't match the summed VAT breakdown amounts", () => {
       const invoice = clone(domesticSimple) as Invoice;
       // will be fail with 190
       invoice.taxAmount = 100;
@@ -254,7 +257,7 @@ describe("validateBusinessRules", () => {
       expect(issues.some((i) => i.code === "INVOICE_TAX_AMOUNT_MISMATCH")).toBe(true);
     });
 
-    it("27. flags a monetary amount with more than 2 decimal places", () => {
+    it("28. flags a monetary amount with more than 2 decimal places", () => {
       const invoice = clone(domesticSimple) as Invoice;
       // will be fail with xxxx.xx, xxxx.x, xxxx, xxx, xx, x
       invoice.lines[0]!.lineAmount = 1000.001;
@@ -264,7 +267,7 @@ describe("validateBusinessRules", () => {
       expect(issues.some((i) => i.code === "MONETARY_AMOUNT_DECIMAL_PRECISION")).toBe(true);
     });
 
-    it("28. flags the correct line when line 2 amount doesn't match quantity x unit price", () => {
+    it("29. flags the correct line when line 2 amount doesn't match quantity x unit price", () => {
       const invoice = clone(domesticMultiLine) as Invoice;
       // will be fail with 190
       invoice.lines[1]!.lineAmount = 19;
@@ -274,7 +277,7 @@ describe("validateBusinessRules", () => {
       expect(issues.some((i) => i.code === "LINE_AMOUNT_ROUNDING")).toBe(true);
     });
 
-    it("29. flags VAT_TAXABLE_AMOUNT_MISMATCH across a multi-line invoice", () => {
+    it("30. flags VAT_TAXABLE_AMOUNT_MISMATCH across a multi-line invoice", () => {
       const invoice = clone(domesticMultiLine) as Invoice;
       // fail with 1239
       invoice.vatBreakdowns[0]!.taxableAmount = 123;
@@ -284,7 +287,7 @@ describe("validateBusinessRules", () => {
       expect(issues.some((i) => i.code === "VAT_TAXABLE_AMOUNT_MISMATCH")).toBe(true);
     });
 
-    it("30. flags VAT_TAX_AMOUNT_ROUNDING on a 7% reduced-rate breakdown", () => {
+    it("31. flags VAT_TAX_AMOUNT_ROUNDING on a 7% reduced-rate breakdown", () => {
       const invoice = clone(reducedRate) as Invoice;
       //fail 17.5
       invoice.vatBreakdowns[0]!.taxAmount = 17.4;
@@ -294,7 +297,7 @@ describe("validateBusinessRules", () => {
       expect(issues.some((i) => i.code === "VAT_TAX_AMOUNT_ROUNDING")).toBe(true);
     });
 
-    it("31. flags VAT_TAX_AMOUNT_ROUNDING when a zero-rated breakdown has non-zero taxAmount", () => {
+    it("32. flags VAT_TAX_AMOUNT_ROUNDING when a zero-rated breakdown has non-zero taxAmount", () => {
       const invoice = clone(zeroRated) as Invoice;
       // fail with 0
       invoice.vatBreakdowns[0]!.taxAmount = 1;
@@ -306,7 +309,7 @@ describe("validateBusinessRules", () => {
   });
 
   describe("VAT exemption reason rules", () => {
-    it("32. flags an exempt (E) VAT breakdown missing an exemption reason", () => {
+    it("33. flags an exempt (E) VAT breakdown missing an exemption reason", () => {
       const invoice = clone(exempt) as Invoice;
       delete invoice.vatBreakdowns[0]!.exemptionReason;
       delete invoice.vatBreakdowns[0]!.exemptionReasonCode;
@@ -316,7 +319,7 @@ describe("validateBusinessRules", () => {
       expect(issues.some((i) => i.code === "VAT_EXEMPTION_REASON_REQUIRED")).toBe(true);
     });
 
-    it("33. flags a standard-rated (S) breakdown that carries an exemption reason (BR-Z-10)", () => {
+    it("34. flags a standard-rated (S) breakdown that carries an exemption reason (BR-Z-10)", () => {
       const invoice = clone(domesticSimple) as Invoice;
       invoice.vatBreakdowns[0]!.exemptionReasonCode = "VATEX-EU-79-C";
 
@@ -325,7 +328,7 @@ describe("validateBusinessRules", () => {
       expect(issues.some((i) => i.code === "VAT_EXEMPTION_REASON_NOT_ALLOWED")).toBe(true);
     });
 
-    it("34. flags a zero-rated (Z) breakdown that carries an exemption reason (BR-Z-10)", () => {
+    it("35. flags a zero-rated (Z) breakdown that carries an exemption reason (BR-Z-10)", () => {
       const invoice = clone(zeroRated) as Invoice;
       invoice.vatBreakdowns[0]!.exemptionReason = "Nullsatz.";
 
@@ -336,7 +339,7 @@ describe("validateBusinessRules", () => {
   });
 
   describe("place of supply", () => {
-    it("35. warns (but doesn't error) when seller and buyer are in different countries", () => {
+    it("36. warns (but doesn't error) when seller and buyer are in different countries", () => {
       const invoice = clone(domesticSimple) as Invoice;
       invoice.buyer.address.countryCode = "FR";
 
@@ -347,7 +350,7 @@ describe("validateBusinessRules", () => {
       expect(issues.filter((i) => i.severity === "error")).toEqual([]);
     });
 
-    it("36. doesn't warn about place of supply when seller and buyer share a country", () => {
+    it("37. doesn't warn about place of supply when seller and buyer share a country", () => {
       const issues = validateBusinessRules(clone(domesticSimple) as Invoice);
 
       expect(issues.some((i) => i.code === "PLACE_OF_SUPPLY_CROSS_BORDER")).toBe(false);
@@ -355,7 +358,7 @@ describe("validateBusinessRules", () => {
   });
 
   describe("reverse-charge buyer VAT ID (inline check, VAT category 'AE')", () => {
-    it("37. flags a reverse-charge (AE) invoice missing the buyer's VAT ID", () => {
+    it("38. flags a reverse-charge (AE) invoice missing the buyer's VAT ID", () => {
       const invoice = clone(reverseCharge) as Invoice;
       delete invoice.buyer.vatId;
 
@@ -366,7 +369,7 @@ describe("validateBusinessRules", () => {
   });
 
   describe("credit notes (381) and corrective invoices (384)", () => {
-    it("38. flags credit-note-full when duePayableAmount is made positive", () => {
+    it("39. flags credit-note-full when duePayableAmount is made positive", () => {
       const invoice = clone(creditNoteFull) as Invoice;
       invoice.duePayableAmount = 1190;
 
@@ -375,7 +378,7 @@ describe("validateBusinessRules", () => {
       expect(issues.some((i) => i.code === "CREDIT_NOTE_POSITIVE_AMOUNT")).toBe(true);
     });
 
-    it("39. flags credit-note-partial when precedingInvoiceReference is removed", () => {
+    it("40. flags credit-note-partial when precedingInvoiceReference is removed", () => {
       const invoice = clone(creditNotePartial) as Invoice;
       delete invoice.precedingInvoiceReference;
 
@@ -391,7 +394,7 @@ describe("validateBusinessRules", () => {
   // is kept here because it verifies how two separate rule modules (delivery.ts and
   // intra-eu.ts) interact within the full pipeline, not a single module in isolation.
   describe("cross-rule interactions", () => {
-    it("40. reports a missing deliver-to country code once, via the general BR-57 check, not BR-IC-12", () => {
+    it("41. reports a missing deliver-to country code once, via the general BR-57 check, not BR-IC-12", () => {
       const invoice = clone(intraEuSupply) as Invoice;
       delete invoice.delivery!.deliverTo!.countryCode;
 
