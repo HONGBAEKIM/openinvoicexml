@@ -238,7 +238,14 @@ Source: [en16931].
 | BT-109 | Invoice total excl. VAT | `taxExclusiveAmount`        | §14 Abs. 4 Nr. 7 UStG | `cbc:TaxExclusiveAmount[@currencyID]`      |
 | BT-110 | Total VAT amount        | `taxAmount`                  | §14 Abs. 4 Nr. 8 UStG | `cbc:TaxAmount[@currencyID]` (in TaxTotal) |
 | BT-112 | Invoice total incl. VAT | `taxInclusiveAmount`        | —                      | `cbc:TaxInclusiveAmount[@currencyID]`      |
+| BT-113 | Prepaid amount (optional) | `prepaidAmount`            | —                      | `cbc:PrepaidAmount[@currencyID]`           |
 | BT-115 | Amount due for payment  | `duePayableAmount`          | —                      | `cbc:PayableAmount[@currencyID]`           |
+
+`duePayableAmount` (BT-115) must equal `taxInclusiveAmount - prepaidAmount` (BT-112 − BT-113;
+BT-114 rounding amount is out of scope — nothing in this implementation produces a
+rounding-amount value). `cbc:PrepaidAmount` is only emitted when `prepaidAmount` is set, and sits
+between `cbc:TaxInclusiveAmount` and `cbc:PayableAmount` in `cac:LegalMonetaryTotal` — the fixed
+child order required by `UBL-Invoice-2.1.xsd`'s `LegalMonetaryTotalType`.
 
 ### Invoice lines (BG-25)
 
@@ -270,7 +277,6 @@ identical between the two document types.
 - **BG-24**: Additional supporting documents
 - **BG-20 / BG-21**: Document-level allowances and charges
 - **BG-27 / BG-28**: Line-level allowances and charges
-- **BT-113**: Prepaid amount
 
 ---
 

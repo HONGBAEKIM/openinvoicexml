@@ -157,6 +157,7 @@ export interface DocumentFields {
   taxExclusiveAmount: number;
   taxInclusiveAmount: number;
   duePayableAmount: number;
+  prepaidAmount?: number | undefined;
   lines: LineFields[];
 }
 
@@ -190,6 +191,7 @@ export function mapInvoice(invoice: Invoice): DocumentFields {
     taxExclusiveAmount: invoice.taxExclusiveAmount,
     taxInclusiveAmount: invoice.taxInclusiveAmount,
     duePayableAmount: invoice.duePayableAmount,
+    prepaidAmount: invoice.prepaidAmount,
     lines: invoice.lines.map(mapLine),
   };
 }

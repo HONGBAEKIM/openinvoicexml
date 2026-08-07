@@ -211,13 +211,14 @@ export function validateBusinessRules(invoice: Invoice): ValidationIssue[] {
     });
   }
 
-  // BT-115 duePayableAmount = taxInclusiveAmount.
-  // BT-115 = BT-112 − BT-113 + BT-114
-  if (!isClose(invoice.duePayableAmount, invoice.taxInclusiveAmount)) {
+  // BT-115 = BT-112 − BT-113 + BT-114 (BT-114 rounding amount is out of scope — nothing
+  // today produces a rounding-amount value to plug in there).
+  const expectedDuePayableAmount = round2(invoice.taxInclusiveAmount - (invoice.prepaidAmount ?? 0));
+  if (!isClose(invoice.duePayableAmount, expectedDuePayableAmount)) {
     issues.push({
       code: "INVOICE_DUE_PAYABLE_AMOUNT_MISMATCH",
       severity: "error",
-      message: `duePayableAmount: BT-115 amount ${invoice.duePayableAmount} does not match taxInclusiveAmount (${invoice.taxInclusiveAmount}).`,
+      message: `duePayableAmount: BT-115 amount ${invoice.duePayableAmount} does not match taxInclusiveAmount minus prepaidAmount (${expectedDuePayableAmount}).`,
       path: "duePayableAmount",
     });
   }

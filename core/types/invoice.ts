@@ -45,6 +45,8 @@ export interface Invoice {
   taxInclusiveAmount: number;
   /** BT-115: Amount due for payment. */
   duePayableAmount: number;
+  /** BT-113: Prepaid amount (e.g. a prior down payment) deducted from this invoice. */
+  prepaidAmount?: number;
 
   /** BG-16: Payment means. */
   paymentMeans?: {

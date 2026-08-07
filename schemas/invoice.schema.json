@@ -87,6 +87,10 @@
       "type": "number",
       "description": "BT-115: Amount due for payment. Usually equals taxInclusiveAmount unless prepayment has been made."
     },
+    "prepaidAmount": {
+      "type": "number",
+      "description": "BT-113: Prepaid amount (e.g. a prior down payment) deducted from this invoice. duePayableAmount = taxInclusiveAmount - prepaidAmount."
+    },
     "paymentMeans": {
       "type": "object",
       "additionalProperties": false,

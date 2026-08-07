@@ -53,7 +53,7 @@ function clone<T>(fixture: T): T {
 /**
  * What's tested here (full business-rule validation pipeline):
  *
- * Every test below is numbered 1-41, in the same top-to-bottom order they appear in the
+ * Every test below is numbered 1-44, in the same top-to-bottom order they appear in the
  * file, so a row here can be matched to its `it(...)` by searching for "N." in either
  * place — useful if you didn't write this file and the describe/it nesting alone isn't
  * enough to navigate by.
@@ -105,46 +105,54 @@ function clone<T>(fixture: T): T {
  * | 31 | Reduced-rate 7% VAT amount is calculated incorrectly        | VAT_TAX_AMOUNT_ROUNDING       |
  * | 32 | Zero-rated VAT breakdown has a non-zero tax amount          | VAT_TAX_AMOUNT_ROUNDING       |
  *
+ * Prepaid amount rule (BT-113 / BT-115)
+ *
+ * | #  | Test case                                                                   | Expected issue/result               |
+ * |----|----------------------------------------------------------------------------|--------------------------------------|
+ * | 33 | No prepaidAmount set; duePayableAmount doesn't match taxInclusiveAmount    | INVOICE_DUE_PAYABLE_AMOUNT_MISMATCH  |
+ * | 34 | duePayableAmount correctly reduced by prepaidAmount                        | no INVOICE_DUE_PAYABLE_AMOUNT_MISMATCH |
+ * | 35 | prepaidAmount set but duePayableAmount still equals full taxInclusiveAmount | INVOICE_DUE_PAYABLE_AMOUNT_MISMATCH  |
+ *
  * VAT exemption reason rules
  *
  * | #  | Test case                                             | Expected issue              |
- * |----|----------------------------------------------------------|--------------------------|
- * | 33 | Category E has no exemption reason or reason code     | VAT_EXEMPTION_REASON_REQUIRED   |
- * | 34 | Category S incorrectly has an exemption reason        | VAT_EXEMPTION_REASON_NOT_ALLOWED |
- * | 35 | Category Z incorrectly has an exemption reason        | VAT_EXEMPTION_REASON_NOT_ALLOWED |
+ * |----|------------------------------------------------------------|--------------------------|
+ * | 36 | Category E has no exemption reason or reason code     | VAT_EXEMPTION_REASON_REQUIRED   |
+ * | 37 | Category S incorrectly has an exemption reason        | VAT_EXEMPTION_REASON_NOT_ALLOWED |
+ * | 38 | Category Z incorrectly has an exemption reason        | VAT_EXEMPTION_REASON_NOT_ALLOWED |
  *
  * Place-of-supply rules
  *
  * | #  | Seller | Buyer | Expected result                                     |
  * |----|--------|-------|-------------------------------------------------------|
- * | 36 | DE     | FR    | PLACE_OF_SUPPLY_CROSS_BORDER warning, but no error   |
- * | 37 | DE     | DE    | no PLACE_OF_SUPPLY_CROSS_BORDER warning              |
+ * | 39 | DE     | FR    | PLACE_OF_SUPPLY_CROSS_BORDER warning, but no error   |
+ * | 40 | DE     | DE    | no PLACE_OF_SUPPLY_CROSS_BORDER warning              |
  *
  * Reverse-charge rules
  *
  * | #  | Category | Test case                  | Expected issue                       |
  * |----|----------|-----------------------------|---------------------------------------|
- * | 38 | AE       | Buyer VAT ID is missing    | REVERSE_CHARGE_BUYER_VAT_ID_REQUIRED |
+ * | 41 | AE       | Buyer VAT ID is missing    | REVERSE_CHARGE_BUYER_VAT_ID_REQUIRED |
  *
  * Credit note / corrective invoice rules
  *
  * | #  | Fixture              | Mutation                          | Expected issue                      |
  * |----|-----------------------|-------------------------------------|----------------------------------|
- * | 39 | credit-note-full     | duePayableAmount set positive      | CREDIT_NOTE_POSITIVE_AMOUNT          |
- * | 40 | credit-note-partial  | precedingInvoiceReference removed  | PRECEDING_INVOICE_REFERENCE_REQUIRED |
+ * | 42 | credit-note-full     | duePayableAmount set positive      | CREDIT_NOTE_POSITIVE_AMOUNT          |
+ * | 43 | credit-note-partial  | precedingInvoiceReference removed  | PRECEDING_INVOICE_REFERENCE_REQUIRED |
  *
  * Cross-rule interaction
  *
  * | #  | Test case                                                      | Expected result                                                                     |
  * |----|-------------------------------------------------------------------|-----------------------------------------------------------------------------|
- * | 41 | Intra-EU invoice, deliver-to address present but lacks countryCode | DELIVERY_COUNTRY_REQUIRED reported once via general BR-57; INTRA_EU_SUPPLY_DELIVERY_COUNTRY_REQUIRED absent (no duplicate) |
+ * | 44 | Intra-EU invoice, deliver-to address present but lacks countryCode | DELIVERY_COUNTRY_REQUIRED reported once via general BR-57; INTRA_EU_SUPPLY_DELIVERY_COUNTRY_REQUIRED absent (no duplicate) |
  *
  * Exhaustive edge-case coverage for small-business invoices, outside-scope invoices,
  * intra-EU supplies, delivery addresses, exports, reverse-charge subcases, and credit
  * notes / corrective invoices lives alongside their implementations in
- * validators/rules/*.test.ts. Tests 38-41 above are kept here too (rather than only in
+ * validators/rules/*.test.ts. Tests 41-44 above are kept here too (rather than only in
  * their respective rule-module test files) to confirm each rule is actually wired into
- * validateBusinessRules() and, for 38 and 41, that it interacts correctly with the other
+ * validateBusinessRules() and, for 41 and 44, that it interacts correctly with the other
  * rule modules running in the same pipeline.
  *
  * This file primarily verifies shared rules and confirms that the individual
@@ -306,10 +314,40 @@ describe("validateBusinessRules", () => {
 
       expect(issues.some((i) => i.code === "VAT_TAX_AMOUNT_ROUNDING")).toBe(true);
     });
+
+    it("33. flags a duePayableAmount that doesn't match taxInclusiveAmount when no prepaidAmount is set", () => {
+      const invoice = clone(domesticSimple) as Invoice;
+      // taxInclusiveAmount is 1190; this doesn't match it or any prepaidAmount deduction
+      invoice.duePayableAmount = 1000;
+
+      const issues = validateBusinessRules(invoice);
+
+      expect(issues.some((i) => i.code === "INVOICE_DUE_PAYABLE_AMOUNT_MISMATCH")).toBe(true);
+    });
+
+    it("34. accepts a duePayableAmount correctly reduced by prepaidAmount (BT-115 = BT-112 − BT-113)", () => {
+      const invoice = clone(domesticSimple) as Invoice;
+      invoice.prepaidAmount = 400;
+      invoice.duePayableAmount = 790; // 1190 - 400
+
+      const issues = validateBusinessRules(invoice);
+
+      expect(issues.some((i) => i.code === "INVOICE_DUE_PAYABLE_AMOUNT_MISMATCH")).toBe(false);
+    });
+
+    it("35. flags a duePayableAmount that ignores prepaidAmount (still equal to the full taxInclusiveAmount)", () => {
+      const invoice = clone(domesticSimple) as Invoice;
+      invoice.prepaidAmount = 400;
+      invoice.duePayableAmount = 1190; // should be 790 once prepaidAmount is deducted
+
+      const issues = validateBusinessRules(invoice);
+
+      expect(issues.some((i) => i.code === "INVOICE_DUE_PAYABLE_AMOUNT_MISMATCH")).toBe(true);
+    });
   });
 
   describe("VAT exemption reason rules", () => {
-    it("33. flags an exempt (E) VAT breakdown missing an exemption reason", () => {
+    it("36. flags an exempt (E) VAT breakdown missing an exemption reason", () => {
       const invoice = clone(exempt) as Invoice;
       delete invoice.vatBreakdowns[0]!.exemptionReason;
       delete invoice.vatBreakdowns[0]!.exemptionReasonCode;
@@ -319,7 +357,7 @@ describe("validateBusinessRules", () => {
       expect(issues.some((i) => i.code === "VAT_EXEMPTION_REASON_REQUIRED")).toBe(true);
     });
 
-    it("34. flags a standard-rated (S) breakdown that carries an exemption reason (BR-Z-10)", () => {
+    it("37. flags a standard-rated (S) breakdown that carries an exemption reason (BR-Z-10)", () => {
       const invoice = clone(domesticSimple) as Invoice;
       invoice.vatBreakdowns[0]!.exemptionReasonCode = "VATEX-EU-79-C";
 
@@ -328,7 +366,7 @@ describe("validateBusinessRules", () => {
       expect(issues.some((i) => i.code === "VAT_EXEMPTION_REASON_NOT_ALLOWED")).toBe(true);
     });
 
-    it("35. flags a zero-rated (Z) breakdown that carries an exemption reason (BR-Z-10)", () => {
+    it("38. flags a zero-rated (Z) breakdown that carries an exemption reason (BR-Z-10)", () => {
       const invoice = clone(zeroRated) as Invoice;
       invoice.vatBreakdowns[0]!.exemptionReason = "Nullsatz.";
 
@@ -339,7 +377,7 @@ describe("validateBusinessRules", () => {
   });
 
   describe("place of supply", () => {
-    it("36. warns (but doesn't error) when seller and buyer are in different countries", () => {
+    it("39. warns (but doesn't error) when seller and buyer are in different countries", () => {
       const invoice = clone(domesticSimple) as Invoice;
       invoice.buyer.address.countryCode = "FR";
 
@@ -350,7 +388,7 @@ describe("validateBusinessRules", () => {
       expect(issues.filter((i) => i.severity === "error")).toEqual([]);
     });
 
-    it("37. doesn't warn about place of supply when seller and buyer share a country", () => {
+    it("40. doesn't warn about place of supply when seller and buyer share a country", () => {
       const issues = validateBusinessRules(clone(domesticSimple) as Invoice);
 
       expect(issues.some((i) => i.code === "PLACE_OF_SUPPLY_CROSS_BORDER")).toBe(false);
@@ -358,7 +396,7 @@ describe("validateBusinessRules", () => {
   });
 
   describe("reverse-charge buyer VAT ID (inline check, VAT category 'AE')", () => {
-    it("38. flags a reverse-charge (AE) invoice missing the buyer's VAT ID", () => {
+    it("41. flags a reverse-charge (AE) invoice missing the buyer's VAT ID", () => {
       const invoice = clone(reverseCharge) as Invoice;
       delete invoice.buyer.vatId;
 
@@ -369,7 +407,7 @@ describe("validateBusinessRules", () => {
   });
 
   describe("credit notes (381) and corrective invoices (384)", () => {
-    it("39. flags credit-note-full when duePayableAmount is made positive", () => {
+    it("42. flags credit-note-full when duePayableAmount is made positive", () => {
       const invoice = clone(creditNoteFull) as Invoice;
       invoice.duePayableAmount = 1190;
 
@@ -378,7 +416,7 @@ describe("validateBusinessRules", () => {
       expect(issues.some((i) => i.code === "CREDIT_NOTE_POSITIVE_AMOUNT")).toBe(true);
     });
 
-    it("40. flags credit-note-partial when precedingInvoiceReference is removed", () => {
+    it("43. flags credit-note-partial when precedingInvoiceReference is removed", () => {
       const invoice = clone(creditNotePartial) as Invoice;
       delete invoice.precedingInvoiceReference;
 
@@ -394,7 +432,7 @@ describe("validateBusinessRules", () => {
   // is kept here because it verifies how two separate rule modules (delivery.ts and
   // intra-eu.ts) interact within the full pipeline, not a single module in isolation.
   describe("cross-rule interactions", () => {
-    it("41. reports a missing deliver-to country code once, via the general BR-57 check, not BR-IC-12", () => {
+    it("44. reports a missing deliver-to country code once, via the general BR-57 check, not BR-IC-12", () => {
       const invoice = clone(intraEuSupply) as Invoice;
       delete invoice.delivery!.deliverTo!.countryCode;
 

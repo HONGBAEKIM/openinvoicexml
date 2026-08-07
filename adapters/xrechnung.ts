@@ -176,6 +176,9 @@ export function toXRechnung(invoice: Invoice): string {
   // reduces what's owed, it doesn't create a new payment deadline.
   const dueDate =
     !isCreditNote && fields.dueDate ? `\n  <cbc:DueDate>${fields.dueDate}</cbc:DueDate>` : "";
+  const prepaidAmount = fields.prepaidAmount
+    ? `\n    <cbc:PrepaidAmount currencyID="${currency}">${amt(fields.prepaidAmount)}</cbc:PrepaidAmount>`
+    : "";
 
   const lineExtension = amt(fields.lineExtensionAmount);
   // Converting each VAT breakdown into XML
@@ -209,7 +212,7 @@ ${vatSubtotals}
   <cac:LegalMonetaryTotal>
     <cbc:LineExtensionAmount currencyID="${currency}">${lineExtension}</cbc:LineExtensionAmount>
     <cbc:TaxExclusiveAmount currencyID="${currency}">${amt(fields.taxExclusiveAmount)}</cbc:TaxExclusiveAmount>
-    <cbc:TaxInclusiveAmount currencyID="${currency}">${amt(fields.taxInclusiveAmount)}</cbc:TaxInclusiveAmount>
+    <cbc:TaxInclusiveAmount currencyID="${currency}">${amt(fields.taxInclusiveAmount)}</cbc:TaxInclusiveAmount>${prepaidAmount}
     <cbc:PayableAmount currencyID="${currency}">${amt(fields.duePayableAmount)}</cbc:PayableAmount>
   </cac:LegalMonetaryTotal>
 ${invoiceLines}
