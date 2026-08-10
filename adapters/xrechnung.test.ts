@@ -163,6 +163,54 @@ describe("toXRechnung", () => {
     });
   });
 
+  describe("cac:ContractDocumentReference (BT-12)", () => {
+    it("skips cac:ContractDocumentReference when contractReference is absent", () => {
+      const xml = toXRechnung(domesticSimple as unknown as Invoice);
+      expect(xml).not.toContain("<cac:ContractDocumentReference>");
+    });
+
+    it("renders cac:ContractDocumentReference/cbc:ID when contractReference is present", () => {
+      const invoice: Invoice = {
+        ...(domesticSimple as unknown as Invoice),
+        contractReference: "CONTRACT-2025-001",
+      };
+      const xml = toXRechnung(invoice);
+      const start = xml.indexOf("<cac:ContractDocumentReference>");
+      const end =
+        xml.indexOf("</cac:ContractDocumentReference>") + "</cac:ContractDocumentReference>".length;
+      const contractDocumentReference = xml.slice(start, end);
+
+      expect(contractDocumentReference).toBe(
+        "<cac:ContractDocumentReference>\n    <cbc:ID>CONTRACT-2025-001</cbc:ID>\n  </cac:ContractDocumentReference>",
+      );
+    });
+
+    it("places cac:ContractDocumentReference after cac:BillingReference and before cac:AccountingSupplierParty (UBL 2.1 element order)", () => {
+      const invoice: Invoice = {
+        ...(domesticSimple as unknown as Invoice),
+        precedingInvoiceReference: { id: "INV-2025-001", issueDate: "2025-12-01" },
+        contractReference: "CONTRACT-2025-001",
+      };
+      const xml = toXRechnung(invoice);
+
+      expect(xml.indexOf("<cac:BillingReference>")).toBeLessThan(
+        xml.indexOf("<cac:ContractDocumentReference>"),
+      );
+      expect(xml.indexOf("<cac:ContractDocumentReference>")).toBeLessThan(
+        xml.indexOf("<cac:AccountingSupplierParty>"),
+      );
+    });
+
+    it("escapes special characters in the contract reference", () => {
+      const invoice: Invoice = {
+        ...(domesticSimple as unknown as Invoice),
+        contractReference: "CONTRACT&2025<001",
+      };
+      const xml = toXRechnung(invoice);
+      expect(xml).toContain("<cbc:ID>CONTRACT&amp;2025&lt;001</cbc:ID>");
+    });
+  });
+
   describe("VAT category 'O' (outside the scope of VAT)", () => {
     it("omits the line-level VAT Percent element (BR-O-05)", () => {
       const invoice = { ...(domesticSimple as unknown as Invoice) };

@@ -130,6 +130,7 @@ Source for the BT numbers and their EN 16931/XRechnung basis below: [en16931], [
 | BT-9  | Payment due date       | `dueDate` (optional)    | —                      | `cbc:DueDate` (invoice root, per `BR-CO-25`) |
 | BT-25 | Preceding invoice number | `precedingInvoiceReference.id` (optional)        | EN 16931 §6.2.3 | `cac:BillingReference/cac:InvoiceDocumentReference/cbc:ID`        |
 | BT-26 | Preceding invoice issue date | `precedingInvoiceReference.issueDate` (optional) | EN 16931 §6.2.3 | `cac:BillingReference/cac:InvoiceDocumentReference/cbc:IssueDate` |
+| BT-12 | Contract reference     | `contractReference` (optional) | —                      | `cac:ContractDocumentReference/cbc:ID`       |
 
 BT-9 maps to the plain root-level `cbc:DueDate` element — **not** `cac:PaymentMeans/cbc:PaymentDueDate` or `cac:PaymentTerms/cbc:PaymentDueDate`. Both of those are explicitly discouraged by this EN 16931 profile's own Schematron (`UBL-CR-412` / `UBL-CR-463` in `tools/kosit/config/resources/ubl/2.1/xsl/EN16931-UBL-validation.xsl` — both say "a UBL invoice should not include" those elements). `BR-CO-25` itself checks for `//cbc:DueDate` (or `BT-20` payment terms) whenever the amount due is positive. `adapters/xrechnung.ts` already emits the correct root-level `<cbc:DueDate>` next to `<cbc:IssueDate>` — this row previously described the wrong element, but the generator itself was already correct.
 
@@ -146,6 +147,10 @@ types. See `tools/kosit/config/scenarios.xml`'s "EN16931 XRechnung (UBL CreditNo
 validates against this exact root/namespace.
 
 `precedingInvoiceReference` renders only when present — a plain invoice (`380`) never needs it. `cac:BillingReference` is a repeatable group with several optional children in the UBL schema, but this project emits only `cac:InvoiceDocumentReference/cbc:ID` and `.../cbc:IssueDate`: `BR-55` (fatal, in `tools/kosit/config/resources/ubl/2.1/xsl/EN16931-UBL-validation.xsl`) requires `cbc:ID` whenever `cac:BillingReference` is present at all, while `UBL-CR-023` through `UBL-CR-026` (warnings) discourage including `CopyIndicator`, `UUID`, `IssueTime`, `DocumentTypeCode`, or `DocumentType` in this block.
+
+`precedingInvoiceReference` is a single object, not a list — a final invoice can only reference one prior down payment invoice. See `docs/LIMITATIONS.md`'s "Down payment / final invoices" entry for why this was kept singular rather than broadened to an array.
+
+`contractReference` renders only when present, as `cac:ContractDocumentReference/cbc:ID` — no other `DocumentReferenceType` child is mapped, since EN 16931 only assigns BT-12 to the `ID`, and this profile's Schematron (`UBL-CR-096` through `UBL-CR-109`) discourages every other child (`IssueDate`, `DocumentTypeCode`, etc.) on this element. It sits immediately after `cac:BillingReference` and before `cac:AccountingSupplierParty` in both `UBL-Invoice-2.1.xsd` and `UBL-CreditNote-2.1.xsd`'s fixed element sequence.
 
 ### Seller (BG-4)
 
@@ -271,7 +276,6 @@ identical between the two document types.
 ### Not yet mapped (deferred to Phase 3+)
 
 - **BT-11**: Project reference
-- **BT-12**: Contract reference (`contractReference` exists in schema but not emitted as a BT-12 element yet)
 - **BT-13**: Purchase order reference (`purchaseOrderReference` exists in schema but not emitted yet)
 - **BT-17**: Tender or lot reference
 - **BG-24**: Additional supporting documents

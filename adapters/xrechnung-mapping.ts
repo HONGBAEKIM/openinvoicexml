@@ -146,6 +146,7 @@ export interface DocumentFields {
   businessProcessType: string;
   note?: string | undefined;
   buyerReference?: string | undefined;
+  contractReference?: string | undefined;
   precedingInvoiceReference?: PrecedingInvoiceReferenceFields | undefined;
   seller: PartyFields;
   buyer: PartyFields;
@@ -178,6 +179,7 @@ export function mapInvoice(invoice: Invoice): DocumentFields {
     businessProcessType: invoice.businessProcessType,
     note: invoice.note,
     buyerReference: invoice.buyerReference,
+    contractReference: invoice.contractReference,
     precedingInvoiceReference: invoice.precedingInvoiceReference
       ? mapPrecedingInvoiceReference(invoice.precedingInvoiceReference)
       : undefined,
