@@ -131,6 +131,7 @@ Three validation layers, each catching a different class of error:
 - Line amounts must equal quantity × unit price (within rounding tolerance)
 - VAT breakdown taxable amounts must equal the sum of matching line amounts
 - Document-level totals must be internally consistent (BT-109, BT-110, BT-112, BT-115)
+- A final invoice deducting a down payment (`prepaidAmount`/BT-113) must reference the down payment invoice it deducts (`precedingInvoiceReference`/BT-25/BT-26)
 - All monetary amounts must have at most 2 decimal places
 - Cross-border invoices get a warning-severity place-of-supply notice (never blocking) — see `docs/LIMITATIONS.md`
 

@@ -95,6 +95,20 @@ export function validateBusinessRules(invoice: Invoice): ValidationIssue[] {
     issues,
   );
 
+  // --- Final invoice deducting a down payment (BT-113) must say which invoice paid it --
+  // Mirrors the credit-note/corrective-invoice reference-required checks above: a
+  // deduction with no pointer to what it deducts is as incomplete as a credit note with
+  // no pointer to what it credits.
+  if (invoice.prepaidAmount !== undefined && !invoice.precedingInvoiceReference) {
+    issues.push({
+      code: "PRECEDING_INVOICE_REFERENCE_REQUIRED",
+      severity: "error",
+      message:
+        "precedingInvoiceReference: BT-25/BT-26 reference to the down payment invoice is required when prepaidAmount (BT-113) is set.",
+      path: "precedingInvoiceReference",
+    });
+  }
+
   // --- VAT breakdown checks -----------------------------------------------
   let totalTaxableAmount = 0;
   let totalTaxAmount = 0;
