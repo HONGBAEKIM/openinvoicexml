@@ -177,6 +177,12 @@ Example invoice JSON files that validate against the schema. Each fixture repres
 | `13.reverse-charge-cleaning.invoice.json`             | [§13b][ustg-13b] Abs. 2 Nr. 8 building cleaning (AE)          |
 | `14.reverse-charge-mobile-devices.invoice.json`       | [§13b][ustg-13b] Abs. 2 Nr. 10 mobile devices, Anlage 4 (AE)  |
 | `15.reverse-charge-gas-and-electricity.invoice.json`  | [§13b][ustg-13b] Abs. 2 Nr. 5 gas/electricity (AE)            |
+| `16.credit-note-full.invoice.json`                    | Credit note (`381`), full reversal                |
+| `17.credit-note-partial.invoice.json`                 | Credit note (`381`), partial line-item credit     |
+| `18.corrective-invoice.invoice.json`                  | Corrective invoice (`384`), partial line-item correction |
+| `19.down-payment.invoice.json`                        | Down payment invoice / Anzahlungsrechnung (`380`) |
+| `20.final-invoice.invoice.json`                       | Final invoice / Schlussrechnung deducting a down payment (`380`) |
+| `21.partial-delivery.invoice.json`                    | Partial delivery invoice / Teilrechnung with contract reference (`380`) |
 
 Fixtures serve three purposes: test inputs for automated tests, reference implementations for contributors, and documentation of supported scenarios. See [`LIMITATIONS.md`](LIMITATIONS.md) for which §13b subcases still lack a fixture.
 
