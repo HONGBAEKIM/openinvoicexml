@@ -33,7 +33,7 @@ export const phasesDict: Record<Lang, Phase[]> = {
       period: "Jul 2026",
       description: "XRechnung-XML-Erstellung, validiert mit dem offiziellen KoSIT-Validator.",
       subItems: ["XML-Generator", "KoSIT-Validierung", "USt-Regeldurchsetzung", "Tests"],
-      status: "progress",
+      status: "done",
     },
     {
       title: "Phase 3 — Deutsche Rechtskonformität & Testfälle",
@@ -46,7 +46,7 @@ export const phasesDict: Record<Lang, Phase[]> = {
         "Anzahlungsrechnungen",
         "30+ Testfälle",
       ],
-      status: "upcoming",
+      status: "progress",
     },
     {
       title: "Phase 4 — Hybrider PDF/A-3-Export",
@@ -109,7 +109,7 @@ export const phasesDict: Record<Lang, Phase[]> = {
       period: "Jul 2026",
       description: "XRechnung XML generation, validated against the official KoSIT validator.",
       subItems: ["XML Generator", "KoSIT Validation", "VAT Rule Enforcement", "Tests"],
-      status: "progress",
+      status: "done",
     },
     {
       title: "Phase 3 — German Law Compliance & Test Fixtures",
@@ -122,7 +122,7 @@ export const phasesDict: Record<Lang, Phase[]> = {
         "Down payment invoices",
         "30+ fixtures",
       ],
-      status: "upcoming",
+      status: "progress",
     },
     {
       title: "Phase 4 — Hybrid PDF/A-3 Export",
