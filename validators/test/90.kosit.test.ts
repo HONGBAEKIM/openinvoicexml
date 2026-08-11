@@ -14,45 +14,7 @@ import { runKosit } from "../90.kosit.js";
 import { toXRechnung } from "../../adapters/xrechnung.js";
 import type { Invoice } from "../../core/index.js";
 
-import domesticSimple from "../../fixtures/01.domestic-simple.invoice.json" with { type: "json" };
-import domesticMultiLine from "../../fixtures/02.domestic-multi-line.invoice.json" with { type: "json" };
-import reducedRate from "../../fixtures/03.reduced-rate.invoice.json" with { type: "json" };
-import exempt from "../../fixtures/04.exempt.invoice.json" with { type: "json" };
-import zeroRated from "../../fixtures/05.zero-rated.invoice.json" with { type: "json" };
-import reverseCharge from "../../fixtures/06.reverse-charge.invoice.json" with { type: "json" };
-import smallBusiness from "../../fixtures/07.small-business.invoice.json" with { type: "json" };
-import intraEuSupply from "../../fixtures/08.intra-eu-supply.invoice.json" with { type: "json" };
-import exportInvoice from "../../fixtures/09.export.invoice.json" with { type: "json" };
-import reverseChargeConstruction from "../../fixtures/10.reverse-charge-construction.invoice.json" with { type: "json" };
-import reverseChargeScrapMetal from "../../fixtures/11.reverse-charge-scrap-metal.invoice.json" with { type: "json" };
-import reverseChargeSecurityTransfer from "../../fixtures/12.reverse-charge-security-transfer.invoice.json" with { type: "json" };
-import reverseChargeCleaning from "../../fixtures/13.reverse-charge-cleaning.invoice.json" with { type: "json" };
-import reverseChargeMobileDevices from "../../fixtures/14.reverse-charge-mobile-devices.invoice.json" with { type: "json" };
-import reverseChargeGasAndElectricity from "../../fixtures/15.reverse-charge-gas-and-electricity.invoice.json" with { type: "json" };
-import creditNoteFull from "../../fixtures/16.credit-note-full.invoice.json" with { type: "json" };
-import creditNotePartial from "../../fixtures/17.credit-note-partial.invoice.json" with { type: "json" };
-import correctiveInvoice from "../../fixtures/18.corrective-invoice.invoice.json" with { type: "json" };
-
-const fixtures: [string, unknown][] = [
-  ["domestic-simple", domesticSimple],
-  ["domestic-multi-line", domesticMultiLine],
-  ["reduced-rate", reducedRate],
-  ["exempt", exempt],
-  ["zero-rated", zeroRated],
-  ["reverse-charge", reverseCharge],
-  ["small-business", smallBusiness],
-  ["intra-eu-supply", intraEuSupply],
-  ["export", exportInvoice],
-  ["reverse-charge-construction", reverseChargeConstruction],
-  ["reverse-charge-scrap-metal", reverseChargeScrapMetal],
-  ["reverse-charge-security-transfer", reverseChargeSecurityTransfer],
-  ["reverse-charge-cleaning", reverseChargeCleaning],
-  ["reverse-charge-mobile-devices", reverseChargeMobileDevices],
-  ["reverse-charge-gas-and-electricity", reverseChargeGasAndElectricity],
-  ["credit-note-full", creditNoteFull],
-  ["credit-note-partial", creditNotePartial],
-  ["corrective-invoice", correctiveInvoice],
-];
+import { allFixtures } from "../../fixtures/index.js";
 
 const JAVA_BIN = existsSync("tools/jre/bin/java") ? "tools/jre/bin/java" : "java";
 const JAR_PATH = "tools/kosit/validator.jar";
@@ -84,7 +46,7 @@ afterAll(() => {
 /**
  * What's tested here (real KoSIT validator — XSD + Schematron, via the Java jar):
  *
- * - One test per current fixture (all 18 in `fixtures` above): generates XML via
+ * - One test per current fixture (all 21 in `fixtures` above): generates XML via
  *   toXRechnung() and confirms KoSIT reports zero error-severity findings — the strongest
  *   check available, since it's the same validator XRechnung recipients actually run.
  * - One negative control ("rejects an invoice missing mandatory fields"): a deliberately
@@ -96,7 +58,7 @@ afterAll(() => {
  */
 // if Java isn't installed, tests are skipped instead of failing.
 describe.skipIf(!available)("runKosit", () => {
-  describe.each(fixtures)("%s", (label, fixture) => {
+  describe.each(allFixtures)("%s", (label, fixture) => {
     // KoSIT spawns a JVM synchronously per call; startup + schema loading
     // alone takes ~9-10s, well past vitest's default 5s testTimeout.
     it("passes KoSIT validation with zero errors", async () => {
@@ -106,7 +68,9 @@ describe.skipIf(!available)("runKosit", () => {
       // so we added as unknown and say Typescript, stop checking
       // as unknown as Invoice: this JSON really matches Invoice"
       const xml = toXRechnung(fixture as Invoice);
-      const xmlPath = join(workDir, `${label}.xml`);
+      // example) 1. domestic-simple (19% S).xml -> domestic-simple.xml
+      const slug = label.replace(/^\d+\.\s*/, "").replace(/\s*\(.*\)$/, "");
+      const xmlPath = join(workDir, `${slug}.xml`);
       // Writes the XML to disk because KoSIT validates files, not strings.
       writeFileSync(xmlPath, xml);
 

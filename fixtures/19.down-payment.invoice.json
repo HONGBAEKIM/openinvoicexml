@@ -1,0 +1,77 @@
+{
+  "id": "RE-2026-0050",
+  "typeCode": "380",
+  "issueDate": "2026-06-01",
+  "dueDate": "2026-06-15",
+  "currencyCode": "EUR",
+  "businessProcessType": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+  "buyerReference": "04011000-12345-03",
+
+  "seller": {
+    "name": "Max Mustermann GmbH",
+    "vatId": "DE123456789",
+    "address": {
+      "line1": "Unter den Linden 1",
+      "city": "Berlin",
+      "postalCode": "10117",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "rechnung@mustermann.example",
+    "electronicAddressSchemeId": "EM",
+    "contact": {
+      "name": "Buchhaltung",
+      "telephone": "+49 30 1234567",
+      "email": "buchhaltung@mustermann.example"
+    }
+  },
+
+  "buyer": {
+    "name": "Acme GmbH",
+    "vatId": "DE987654321",
+    "address": {
+      "line1": "Marienplatz 1",
+      "city": "München",
+      "postalCode": "80331",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "einkauf@acme.example",
+    "electronicAddressSchemeId": "EM"
+  },
+
+  "lines": [
+    {
+      "id": "1",
+      "name": "Anzahlung: Softwareentwicklungsprojekt",
+      "description": "Anzahlung (30% des Auftragswerts) gemäß Vertrag VERTRAG-2026-0100",
+      "quantity": 1,
+      "unitCode": "C62",
+      "unitPrice": 6000.0,
+      "lineAmount": 6000.0,
+      "vatCategoryCode": "S",
+      "vatRate": 19
+    }
+  ],
+
+  "vatBreakdowns": [
+    {
+      "categoryCode": "S",
+      "rate": 19,
+      "taxableAmount": 6000.0,
+      "taxAmount": 1140.0
+    }
+  ],
+
+  "taxExclusiveAmount": 6000.0,
+  "taxAmount": 1140.0,
+  "taxInclusiveAmount": 7140.0,
+  "duePayableAmount": 7140.0,
+
+  "paymentMeans": {
+    "code": "58",
+    "iban": "DE89370400440532013000",
+    "accountName": "Max Mustermann GmbH",
+    "bic": "COBADEFFXXX"
+  },
+
+  "note": "Anzahlungsrechnung gemäß Vertrag VERTRAG-2026-0100: 30% des Gesamtauftragswerts von EUR 20.000,00 netto. Die Schlussrechnung wird diesen Betrag als Anzahlung berücksichtigen."
+}

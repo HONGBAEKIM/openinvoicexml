@@ -1,0 +1,83 @@
+{
+  "id": "RE-2026-0055",
+  "typeCode": "380",
+  "issueDate": "2026-07-20",
+  "dueDate": "2026-08-19",
+  "currencyCode": "EUR",
+  "businessProcessType": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+  "buyerReference": "04011000-12345-03",
+
+  "precedingInvoiceReference": {
+    "id": "RE-2026-0050",
+    "issueDate": "2026-06-01"
+  },
+
+  "seller": {
+    "name": "Max Mustermann GmbH",
+    "vatId": "DE123456789",
+    "address": {
+      "line1": "Unter den Linden 1",
+      "city": "Berlin",
+      "postalCode": "10117",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "rechnung@mustermann.example",
+    "electronicAddressSchemeId": "EM",
+    "contact": {
+      "name": "Buchhaltung",
+      "telephone": "+49 30 1234567",
+      "email": "buchhaltung@mustermann.example"
+    }
+  },
+
+  "buyer": {
+    "name": "Acme GmbH",
+    "vatId": "DE987654321",
+    "address": {
+      "line1": "Marienplatz 1",
+      "city": "München",
+      "postalCode": "80331",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "einkauf@acme.example",
+    "electronicAddressSchemeId": "EM"
+  },
+
+  "lines": [
+    {
+      "id": "1",
+      "name": "Softwareentwicklungsprojekt (Gesamtleistung)",
+      "description": "Individualsoftware-Entwicklung gemäß Vertrag VERTRAG-2026-0100, vollständige Leistungserbringung",
+      "quantity": 1,
+      "unitCode": "C62",
+      "unitPrice": 20000.0,
+      "lineAmount": 20000.0,
+      "vatCategoryCode": "S",
+      "vatRate": 19
+    }
+  ],
+
+  "vatBreakdowns": [
+    {
+      "categoryCode": "S",
+      "rate": 19,
+      "taxableAmount": 20000.0,
+      "taxAmount": 3800.0
+    }
+  ],
+
+  "taxExclusiveAmount": 20000.0,
+  "taxAmount": 3800.0,
+  "taxInclusiveAmount": 23800.0,
+  "prepaidAmount": 7140.0,
+  "duePayableAmount": 16660.0,
+
+  "paymentMeans": {
+    "code": "58",
+    "iban": "DE89370400440532013000",
+    "accountName": "Max Mustermann GmbH",
+    "bic": "COBADEFFXXX"
+  },
+
+  "note": "Schlussrechnung zum Vertrag VERTRAG-2026-0100. Von der Gesamtsumme wird die Anzahlung aus Rechnung RE-2026-0050 vom 01.06.2026 (EUR 7.140,00 brutto) abgezogen."
+}

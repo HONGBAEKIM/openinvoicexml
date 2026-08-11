@@ -1,0 +1,79 @@
+{
+  "id": "RE-2026-0060",
+  "typeCode": "380",
+  "issueDate": "2026-07-01",
+  "dueDate": "2026-07-31",
+  "currencyCode": "EUR",
+  "businessProcessType": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+  "buyerReference": "04011000-12345-03",
+
+  "contractReference": "VERTRAG-2026-0200",
+
+  "seller": {
+    "name": "Max Mustermann GmbH",
+    "vatId": "DE123456789",
+    "address": {
+      "line1": "Unter den Linden 1",
+      "city": "Berlin",
+      "postalCode": "10117",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "rechnung@mustermann.example",
+    "electronicAddressSchemeId": "EM",
+    "contact": {
+      "name": "Buchhaltung",
+      "telephone": "+49 30 1234567",
+      "email": "buchhaltung@mustermann.example"
+    }
+  },
+
+  "buyer": {
+    "name": "Acme GmbH",
+    "vatId": "DE987654321",
+    "address": {
+      "line1": "Marienplatz 1",
+      "city": "München",
+      "postalCode": "80331",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "einkauf@acme.example",
+    "electronicAddressSchemeId": "EM"
+  },
+
+  "lines": [
+    {
+      "id": "1",
+      "name": "Teillieferung: Phase 1 – Anforderungsanalyse und Konzeption",
+      "description": "Erste von drei Projektphasen gemäß Rahmenvertrag VERTRAG-2026-0200",
+      "quantity": 1,
+      "unitCode": "C62",
+      "unitPrice": 15000.0,
+      "lineAmount": 15000.0,
+      "vatCategoryCode": "S",
+      "vatRate": 19
+    }
+  ],
+
+  "vatBreakdowns": [
+    {
+      "categoryCode": "S",
+      "rate": 19,
+      "taxableAmount": 15000.0,
+      "taxAmount": 2850.0
+    }
+  ],
+
+  "taxExclusiveAmount": 15000.0,
+  "taxAmount": 2850.0,
+  "taxInclusiveAmount": 17850.0,
+  "duePayableAmount": 17850.0,
+
+  "paymentMeans": {
+    "code": "58",
+    "iban": "DE89370400440532013000",
+    "accountName": "Max Mustermann GmbH",
+    "bic": "COBADEFFXXX"
+  },
+
+  "note": "Teilrechnung (Phase 1 von 3) zum Rahmenvertrag VERTRAG-2026-0200. Gesamtauftragswert: EUR 50.000,00 netto. Bereits abgerechnet: EUR 15.000,00 netto. Verbleibender Restbetrag: EUR 35.000,00 netto. Hinweis: Gesamtauftragswert und Restbetrag sind reine Freitextangaben (BT-22) — hierfür existiert kein eigenes XRechnung/EN-16931-Feld."
+}

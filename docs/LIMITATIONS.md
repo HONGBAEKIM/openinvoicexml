@@ -171,11 +171,11 @@ records or Finanzamt correspondence — before issuing a small-business invoice.
 ### Export outside EU (category `G`) — no customs reference field
 
 `ROADMAP.md`'s Week 9 scope mentions "optional customs reference support" for export
-invoices. No field for this was added: neither `contractReference` (BT-12) nor
-`purchaseOrderReference` (BT-13) is a semantic fit, and neither is even emitted to XML yet
-(both deferred, see "Not yet mapped" in [`DATA-MODEL.md`](DATA-MODEL.md)). Adding an unbacked
-`customsReference` field with no confirmed XRechnung BT behind it was judged worse than
-deferring.
+invoices. No field for this was added: neither `contractReference` (BT-12, added since Week 11
+but it is actually a contract reference, not a customs one) nor `purchaseOrderReference` (BT-13,
+still not added — see "Not yet mapped" in [`DATA-MODEL.md`](DATA-MODEL.md)) is a fit.
+Adding an unbacked `customsReference` field with no confirmed XRechnung BT behind it was judged
+worse than deferring.
 
 **Workaround:** Use `note` (BT-22) for a customs reference in the interim if needed.
 
@@ -242,15 +242,16 @@ generation.
 
 ### XML (XRechnung UBL 2.1) — implemented, tested against KoSIT
 
-`adapters/xrechnung.ts` (Week 5) generates UBL 2.1 XML for all 18 current fixtures, and
+`adapters/xrechnung.ts` (Week 5) generates UBL 2.1 XML for all 21 current fixtures, and
 `validators/test/90.kosit.test.ts` (run via `npm test`) confirms zero KoSIT `error`-severity
 findings for each. Passing fixtures demonstrate coverage of those specific examples, not
 that every document the adapter can produce will pass KoSIT; see
 [`COMPLIANCE.md`](COMPLIANCE.md#validating-xrechnung-output). §13b subcase-specific business-rule
 enforcement (beyond the generic VAT category/rate checks) landed incrementally through Week 9 —
 see the §13b section above for exactly which subcases have fixtures. Credit notes (`381`) and
-corrective invoices (`384`) landed in Week 10 — see below. Legal scenarios beyond the current 18
-fixtures (down payments, mixed VAT rates, etc.) remain **Phase 3**.
+corrective invoices (`384`) landed in Week 10, down payment/final/partial-delivery invoices in
+Week 11 — see below. Legal scenarios beyond the current 21 fixtures (mixed VAT rates, etc.)
+remain **Phase 3**.
 
 ### Hybrid PDF/A-3 (Factur-X / ZUGFeRD) — not yet implemented
 
@@ -292,12 +293,52 @@ of it.
 convention, not something the schema or a validator enforces — the internal `Invoice` type has no
 concept of "the original document" to diff against.
 
+### Down payment / final invoices — implemented Week 11, single preceding-invoice reference only
+
+A down payment invoice (Anzahlungsrechnung) needs no engine changes over a normal invoice — it's
+just typeCode `380` for a partial amount, with its own VAT breakdown at the time of payment.
+Fixture: `19.down-payment` (30% of a project billed up front).
+
+A final invoice (Schlussrechnung) deducting a prior down payment sets `prepaidAmount` (BT-113); a
+business rule in `validators/02.business-rules.ts` (`PRECEDING_INVOICE_REFERENCE_REQUIRED`)
+requires it to also set `precedingInvoiceReference` (BT-25/BT-26) pointing at the down payment
+invoice, mirroring the same reference-required pattern credit notes and corrective invoices already
+use — a deduction with no pointer to what it deducts is as incomplete as a credit note with no
+pointer to what it credits. `duePayableAmount` (BT-115) is checked against
+`taxInclusiveAmount − prepaidAmount` (BT-112 − BT-113), per `INVOICE_DUE_PAYABLE_AMOUNT_MISMATCH`.
+Fixture: `20.final-invoice`, referencing `19.down-payment` back and netting its gross amount out of
+the full contract value.
+
+**Limitation:** `precedingInvoiceReference` is a single `{id, issueDate}` object, not a list. A
+final invoice can reference exactly one prior down payment invoice. This was a deliberate choice,
+not an oversight: `precedingInvoiceReference` was introduced in Week 10 for credit notes/corrective
+invoices, and broadening it to an array after one week of use — on a guess that multiple down
+payments per final invoice will matter — would be premature generalization. If a real
+multi-down-payment scenario comes up, that fixture should drive the field's redesign rather than
+speculating now.
+
+**Workaround:** for a final invoice deducting more than one down payment, sum the down payments
+into a single `prepaidAmount` and reference the most recent (or otherwise most relevant) down
+payment invoice; note the other down payment invoice IDs in the free-text `note` (BT-22) field.
+
+### Partial delivery (Teilrechnung) — implemented Week 11, no dedicated fields for contract value / remaining balance
+
+A partial delivery invoice bills one phase of a larger contract. `contractReference` (BT-12) is now
+emitted as `cac:ContractDocumentReference/cbc:ID` (see [`DATA-MODEL.md`](DATA-MODEL.md)). Fixture:
+`21.partial-delivery` (phase 1 of a 3-phase framework contract).
+
+**Deferred:** "overall contract value" and "remaining balance" have no EN 16931/XRechnung Business
+Term at all — not a gap in this project's mapping, but an absence in the standard itself. Inventing
+a non-standard schema field for either would be unvalidatable by KoSIT and unrecognized by any
+receiving system. `21.partial-delivery` states both in the free-text `note` (BT-22) field instead,
+as a fixture-authoring convention — the same approach `18.corrective-invoice` used for "amended
+lines only."
+
 The following scenarios are known and planned but not yet implemented:
 
 | Scenario                                                                                                                                       | Planned phase |
 | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
 | §13b UStG reverse charge subcases beyond construction/scrap-and-waste/security-transfer/cleaning/mobile-devices/gas-and-electricity (fixtures) | Phase 3       |
-| Down payment / final invoices                                                                                                                  | Phase 3       |
 | Mixed VAT rates on a single invoice                                                                                                            | Phase 3       |
 
 ---
@@ -305,7 +346,7 @@ The following scenarios are known and planned but not yet implemented:
 ## Validator Integration
 
 KoSIT validator integration landed in **Phase 2, Week 6** (`validators/90.kosit.ts`, `make
-validate-kosit`) — see [`COMPLIANCE.md`](COMPLIANCE.md#validating-xrechnung-output) for setup and usage. All 18 current
+validate-kosit`) — see [`COMPLIANCE.md`](COMPLIANCE.md#validating-xrechnung-output) for setup and usage. All 21 current
 fixtures pass with zero `error`-severity findings, verified via `validators/test/90.kosit.test.ts`
 as part of `npm test`.
 
@@ -325,7 +366,7 @@ XML — for callers who validate separately or via their own pipeline.
 
 ### Accepted KoSIT notices
 
-- **`BR-DE-TMP-32`** (severity: `information`, not blocking) — 16 of the 18 current fixtures
+- **`BR-DE-TMP-32`** (severity: `information`, not blocking) — 19 of the 21 current fixtures
   omit a delivery/service date (`export` and `intra-eu-supply` populate `actualDeliveryDate`;
   `intra-eu-supply` needs it regardless, per `BR-IC-11` below), even though BT-72 "Actual
   delivery date" is supported by this implementation; the other fixtures simply don't populate
