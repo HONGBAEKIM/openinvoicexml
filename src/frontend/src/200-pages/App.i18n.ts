@@ -40,7 +40,7 @@ export const appDict: Record<
     fundedByGovernment: "Gefördert von der Bundesregierung",
     freeOpenSource: "Kostenlos & Open Source",
     privacyFirst: "Datenschutz zuerst",
-    intro: "Bereite dich auf Deutschlands E-Rechnungspflicht 2028 vor.",
+    intro: "Bereite dich auf Deutschlands B2B E-Rechnungspflicht 2028 vor.",
     fundedByLink: "Gefördert von der Bundesregierung",
     github: "GitHub",
     privacyFirstLink: "Datenschutz zuerst",
