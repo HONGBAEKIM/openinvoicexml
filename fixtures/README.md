@@ -8,7 +8,7 @@ expected XRechnung XML output once Phase 2 is complete.
 | File                               | Scenario                                 | Status      |
 | ---------------------------------- | ---------------------------------------- | ----------- |
 | `01.domestic-simple.invoice.json`     | Standard 19% VAT                         | Implemented |
-| `02.domestic-multi-line.invoice.json` | Multiple lines, standard VAT             | Implemented |
+| `02.domestic-multi-line.invoice.json` | Multiple lines, standard VAT, purchase order reference | Implemented |
 | `03.reduced-rate.invoice.json`        | Reduced 7% VAT (category S)              | Implemented |
 | `04.exempt.invoice.json`              | VAT-exempt (category E, §4 UStG)         | Implemented |
 | `05.zero-rated.invoice.json`          | Zero-rated (category Z)                  | Implemented |
@@ -40,6 +40,7 @@ so any extra `_comment`-style key would fail schema validation. Explanations liv
 
 - **`02.domestic-multi-line.invoice.json`** — same baseline, but three line items (consulting, review, tools
   license) summed into one `vatBreakdowns` entry, to test line-aggregation rather than VAT-category logic.
+  Also sets `purchaseOrderReference` (BT-13), to exercise `cac:OrderReference` alongside the multi-line case.
 - **`03.reduced-rate.invoice.json`** — same shape as the baseline, but `vatRate: 7` / category `S` (reduced rate
   for books, per §12 Abs. 2 UStG ([ustg-12])), to test the reduced-rate math path.
 - **`04.exempt.invoice.json`** — category `E`, `vatRate: 0`, with an `exemptionReason` ("Heilbehandlung", §4

@@ -170,6 +170,11 @@ export function toXRechnung(invoice: Invoice): string {
   const billingReference = fields.precedingInvoiceReference
     ? `\n${renderBillingReference(fields.precedingInvoiceReference)}`
     : "";
+  // BT-13: cac:OrderReference sits before cac:BillingReference in UBL-Invoice-2.1.xsd's fixed
+  // element sequence; only cbc:ID is mapped, matching cac:ContractDocumentReference below.
+  const orderReference = fields.purchaseOrderReference
+    ? `\n  <cac:OrderReference>\n    <cbc:ID>${esc(fields.purchaseOrderReference)}</cbc:ID>\n  </cac:OrderReference>`
+    : "";
   // BT-12: cac:ContractDocumentReference sits between BillingReference and the parties in
   // UBL-Invoice-2.1.xsd's fixed element sequence; only cbc:ID is mapped (BR rules discourage
   // every other DocumentReferenceType child here, e.g. UBL-CR-096 for IssueDate).
@@ -208,7 +213,7 @@ export function toXRechnung(invoice: Invoice): string {
   <cbc:ID>${esc(fields.id)}</cbc:ID>
   <cbc:IssueDate>${fields.issueDate}</cbc:IssueDate>${dueDate}
   <cbc:${typeCodeTag}>${fields.typeCode}</cbc:${typeCodeTag}>${note}
-  <cbc:DocumentCurrencyCode>${currency}</cbc:DocumentCurrencyCode>${buyerRef}${billingReference}${contractReference}
+  <cbc:DocumentCurrencyCode>${currency}</cbc:DocumentCurrencyCode>${buyerRef}${orderReference}${billingReference}${contractReference}
 ${renderParty("cac:AccountingSupplierParty", fields.seller)}
 ${renderParty("cac:AccountingCustomerParty", fields.buyer)}${delivery}${paymentMeans}
   <cac:TaxTotal>

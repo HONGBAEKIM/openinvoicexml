@@ -211,6 +211,50 @@ describe("toXRechnung", () => {
     });
   });
 
+  describe("cac:OrderReference (BT-13)", () => {
+    it("skips cac:OrderReference when purchaseOrderReference is absent", () => {
+      const xml = toXRechnung(domesticSimple as unknown as Invoice);
+      expect(xml).not.toContain("<cac:OrderReference>");
+    });
+
+    it("renders cac:OrderReference/cbc:ID when purchaseOrderReference is present", () => {
+      const invoice: Invoice = {
+        ...(domesticSimple as unknown as Invoice),
+        purchaseOrderReference: "PO-2025-001",
+      };
+      const xml = toXRechnung(invoice);
+      const start = xml.indexOf("<cac:OrderReference>");
+      const end = xml.indexOf("</cac:OrderReference>") + "</cac:OrderReference>".length;
+      const orderReference = xml.slice(start, end);
+
+      expect(orderReference).toBe(
+        "<cac:OrderReference>\n    <cbc:ID>PO-2025-001</cbc:ID>\n  </cac:OrderReference>",
+      );
+    });
+
+    it("places cac:OrderReference before cac:BillingReference (UBL 2.1 element order)", () => {
+      const invoice: Invoice = {
+        ...(domesticSimple as unknown as Invoice),
+        precedingInvoiceReference: { id: "INV-2025-001", issueDate: "2025-12-01" },
+        purchaseOrderReference: "PO-2025-001",
+      };
+      const xml = toXRechnung(invoice);
+
+      expect(xml.indexOf("<cac:OrderReference>")).toBeLessThan(
+        xml.indexOf("<cac:BillingReference>"),
+      );
+    });
+
+    it("escapes special characters in the purchase order reference", () => {
+      const invoice: Invoice = {
+        ...(domesticSimple as unknown as Invoice),
+        purchaseOrderReference: "PO&2025<001",
+      };
+      const xml = toXRechnung(invoice);
+      expect(xml).toContain("<cbc:ID>PO&amp;2025&lt;001</cbc:ID>");
+    });
+  });
+
   describe("VAT category 'O' (outside the scope of VAT)", () => {
     it("omits the line-level VAT Percent element (BR-O-05)", () => {
       const invoice = { ...(domesticSimple as unknown as Invoice) };

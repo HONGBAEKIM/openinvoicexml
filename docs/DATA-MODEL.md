@@ -101,6 +101,7 @@ element they produce. This table is the single source of truth for the BT mappin
 | BT-25 | Preceding invoice number | `precedingInvoiceReference.id` (optional)        | EN 16931 §6.2.3 | `cac:BillingReference/cac:InvoiceDocumentReference/cbc:ID`        |
 | BT-26 | Preceding invoice issue date | `precedingInvoiceReference.issueDate` (optional) | EN 16931 §6.2.3 | `cac:BillingReference/cac:InvoiceDocumentReference/cbc:IssueDate` |
 | BT-12 | Contract reference     | `contractReference` (optional) | —                      | `cac:ContractDocumentReference/cbc:ID`       |
+| BT-13 | Purchase order reference | `purchaseOrderReference` (optional) | —                | `cac:OrderReference/cbc:ID`                  |
 
 Notes: BT-9 maps to the plain root-level `cbc:DueDate`, not `PaymentMeans`/`PaymentTerms` (both
 discouraged by this profile's Schematron). Credit notes (`typeCode` `381`) render as a distinct
@@ -219,7 +220,6 @@ credit notes).
 ### Not yet mapped (deferred)
 
 - **BT-11**: Project reference
-- **BT-13**: Purchase order reference
 - **BT-17**: Tender or lot reference
 - **BG-24**: Additional supporting documents
 - **BG-20 / BG-21**: Document-level allowances and charges

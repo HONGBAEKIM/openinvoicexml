@@ -150,4 +150,17 @@ describe("mapInvoice", () => {
     };
     expect(mapInvoice(invoice).contractReference).toBe("CONTRACT-2025-001");
   });
+
+  it("maps purchaseOrderReference to undefined when absent from the invoice", () => {
+    const invoice = domesticSimple as unknown as Invoice;
+    expect(mapInvoice(invoice).purchaseOrderReference).toBeUndefined();
+  });
+
+  it("maps purchaseOrderReference when present", () => {
+    const invoice: Invoice = {
+      ...(domesticSimple as unknown as Invoice),
+      purchaseOrderReference: "PO-2025-001",
+    };
+    expect(mapInvoice(invoice).purchaseOrderReference).toBe("PO-2025-001");
+  });
 });
