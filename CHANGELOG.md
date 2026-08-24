@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-08-24
+
+### Added
+
+- Allowances and charges (BG-20/21 document-level, BG-27/28 line-level), with corrected line/
+  document-total rounding formulas
+- BT-12, BT-13, BT-25/BT-26, BT-113 in XRechnung XML
+- §13b reverse-charge subcases (construction, scrap metal, security, cleaning, mobile devices,
+  gas/electricity, intra-EU services, real estate, telecommunications), intra-EU supply, export,
+  §19 small business, and outside-scope (category O) VAT rules
+- Credit notes and corrective invoices, rendered as proper UBL document types
+- Fixture library grown from 6 to 30, each validated via KoSIT with zero errors
+
+### Supported XRechnung Business Terms
+
+Only BT-11 (project reference), BT-17 (tender/lot reference), and BG-24 (additional supporting
+documents) remain unmapped — see [`DATA-MODEL.md`](docs/DATA-MODEL.md) for the full table and
+[`fixtures/README.md`](fixtures/README.md) for the complete fixture index.
+
 ## [0.2.0] - 2026-07-20
 
 ### Added

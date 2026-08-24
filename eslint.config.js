@@ -33,6 +33,6 @@ export default [
     // package itself has no /src of its own, so this is unambiguous.
     // vitest.config.ts is root-level tooling config, outside tsconfig.json's
     // `include` (core/adapters/validators only), so it can't use the type-aware parser project.
-    ignores: ["dist/**", "node_modules/**", "src/**", "vitest.config.ts"],
+    ignores: ["dist/**", "node_modules/**", "src/**", "vitest.config.ts", "coverage/**"],
   },
 ];

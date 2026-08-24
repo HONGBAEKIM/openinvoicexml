@@ -1,6 +1,8 @@
 .ONESHELL:
 .PHONY: test type lint generate validate-xml kosit-setup validate-kosit
 
+all: lint type test
+
 test:
 	npm test
 
