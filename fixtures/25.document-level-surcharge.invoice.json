@@ -1,0 +1,87 @@
+{
+  "id": "RE-2026-0047",
+  "typeCode": "380",
+  "issueDate": "2026-06-10",
+  "dueDate": "2026-07-10",
+  "currencyCode": "EUR",
+  "businessProcessType": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+  "buyerReference": "04011000-12345-03",
+
+  "seller": {
+    "name": "Max Mustermann GmbH",
+    "vatId": "DE123456789",
+    "address": {
+      "line1": "Unter den Linden 1",
+      "city": "Berlin",
+      "postalCode": "10117",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "rechnung@mustermann.example",
+    "electronicAddressSchemeId": "EM",
+    "contact": {
+      "name": "Buchhaltung",
+      "telephone": "+49 30 1234567",
+      "email": "buchhaltung@mustermann.example"
+    }
+  },
+
+  "buyer": {
+    "name": "Acme GmbH",
+    "vatId": "DE987654321",
+    "address": {
+      "line1": "Marienplatz 1",
+      "city": "München",
+      "postalCode": "80331",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "einkauf@acme.example",
+    "electronicAddressSchemeId": "EM"
+  },
+
+  "lines": [
+    {
+      "id": "1",
+      "name": "TypeScript Consulting",
+      "description": "Software architecture consulting, June 2026",
+      "quantity": 8,
+      "unitCode": "HUR",
+      "unitPrice": 125.0,
+      "lineAmount": 1000.0,
+      "vatCategoryCode": "S",
+      "vatRate": 19
+    }
+  ],
+
+  "allowancesCharges": [
+    {
+      "amount": 50.0,
+      "isCharge": true,
+      "reason": "Expresszuschlag",
+      "vatCategoryCode": "S",
+      "vatRate": 19
+    }
+  ],
+
+  "vatBreakdowns": [
+    {
+      "categoryCode": "S",
+      "rate": 19,
+      "taxableAmount": 1050.0,
+      "taxAmount": 199.5
+    }
+  ],
+
+  "taxExclusiveAmount": 1050.0,
+  "taxAmount": 199.5,
+  "taxInclusiveAmount": 1249.5,
+  "duePayableAmount": 1249.5,
+
+  "paymentMeans": {
+    "code": "58",
+    "iban": "DE89370400440532013000",
+    "accountName": "Max Mustermann GmbH",
+    "bic": "COBADEFFXXX"
+  },
+
+  "note": "Zahlbar innerhalb von 30 Tagen nach Rechnungsdatum."
+}

@@ -1,0 +1,80 @@
+{
+  "id": "RE-2026-0062",
+  "typeCode": "380",
+  "issueDate": "2026-07-21",
+  "dueDate": "2026-08-20",
+  "currencyCode": "EUR",
+  "businessProcessType": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+  "buyerReference": "04011000-12345-03",
+
+  "seller": {
+    "name": "TelKom Wholesale GmbH",
+    "vatId": "DE323456789",
+    "address": {
+      "line1": "Telekomallee 8",
+      "city": "Frankfurt am Main",
+      "postalCode": "60313",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "rechnung@telkom-wholesale.example",
+    "electronicAddressSchemeId": "EM",
+    "contact": {
+      "name": "Buchhaltung",
+      "telephone": "+49 69 1234567",
+      "email": "buchhaltung@telkom-wholesale.example"
+    }
+  },
+
+  "buyer": {
+    "name": "ResaleTel Vertriebs GmbH",
+    "vatId": "DE423456789",
+    "address": {
+      "line1": "Vertriebsweg 2",
+      "city": "Köln",
+      "postalCode": "50667",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "einkauf@resaletel.example",
+    "electronicAddressSchemeId": "EM"
+  },
+
+  "lines": [
+    {
+      "id": "1",
+      "name": "Telekommunikationsdienstleistungen (Vorleistung)",
+      "description": "Großhandels-Telekommunikationsdienstleistungen zum Wiederverkauf, Juli 2026",
+      "quantity": 1,
+      "unitCode": "C62",
+      "unitPrice": 15000.0,
+      "lineAmount": 15000.0,
+      "vatCategoryCode": "AE",
+      "vatRate": 0
+    }
+  ],
+
+  "vatBreakdowns": [
+    {
+      "categoryCode": "AE",
+      "rate": 0,
+      "taxableAmount": 15000.0,
+      "taxAmount": 0.0,
+      "exemptionReason": "Steuerschuldnerschaft des Leistungsempfängers für Telekommunikationsdienstleistungen an einen Wiederverkäufer gem. §13b Abs. 2 Nr. 12 UStG",
+      "exemptionReasonCode": "VATEX-EU-AE",
+      "reverseChargeReason": "telecommunications"
+    }
+  ],
+
+  "taxExclusiveAmount": 15000.0,
+  "taxAmount": 0.0,
+  "taxInclusiveAmount": 15000.0,
+  "duePayableAmount": 15000.0,
+
+  "paymentMeans": {
+    "code": "58",
+    "iban": "DE89370400440532013000",
+    "accountName": "TelKom Wholesale GmbH",
+    "bic": "COBADEFFXXX"
+  },
+
+  "note": "Steuerschuldnerschaft des Leistungsempfängers (§13b Abs. 2 Nr. 12 UStG, Telekommunikationsdienstleistungen an Wiederverkäufer)."
+}

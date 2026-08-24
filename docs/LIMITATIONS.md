@@ -15,7 +15,6 @@ item (statutory citations, per-subcase eligibility conditions) is preserved in
 | Place of supply — goods/B2C/special categories | Only the default + B2B-service-override rule is checked (`PLACE_OF_SUPPLY_CROSS_BORDER`, warning-only, never blocks). Goods vs. services, B2C, and special categories (real estate, transport, events, catering) aren't modeled — see [§3a UStG][ustg-3a] |
 | Deliver-to city/postal code (`BR-DE-10`/`BR-DE-11`) | Only country code (BT-80) is enforced by the TS validator; a `deliverTo` address missing city/postal code passes here but is rejected by real KoSIT — populate them anyway |
 | Hybrid PDF/A-3 (Factur-X/ZUGFeRD) | Not yet implemented — see [`ROADMAP.md`](ROADMAP.md) |
-| Mixed VAT rates on a single invoice | Not yet implemented |
 
 ## §13b UStG reverse-charge subcases
 
@@ -34,7 +33,10 @@ verified here.
 | `cleaning` | **Yes** |
 | `mobile-devices` | **Yes** |
 | `gas-and-electricity` | **Yes** |
-| `eu-cross-border-service`, `foreign-supplier`, `real-estate`, `emission-certificates`, `qualifying-gold`, `industrial-metals`, `telecommunications` | No fixture yet — logic exists, exercise directly via `reverseChargeReason` |
+| `eu-cross-border-service` | **Yes** |
+| `real-estate` | **Yes** |
+| `telecommunications` | **Yes** |
+| `foreign-supplier`, `emission-certificates`, `qualifying-gold`, `industrial-metals` | No fixture yet — logic exists, exercise directly via `reverseChargeReason` |
 
 One remaining real-world subcase (insolvency-specific security-asset transfers) has no dedicated
 identifier — falls back to the generic `AE` checks only.

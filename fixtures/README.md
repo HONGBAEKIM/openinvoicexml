@@ -31,6 +31,12 @@ expected XRechnung XML output once Phase 2 is complete.
 | `22.document-level-discount.invoice.json` | Document-level allowance (BG-20)         | Implemented |
 | `23.line-level-discount.invoice.json` | Line-level allowance (BG-27)             | Implemented |
 | `24.combined-line-and-document-discount.invoice.json` | Both a line-level and a document-level allowance together | Implemented |
+| `25.document-level-surcharge.invoice.json` | Document-level charge (BG-21)          | Implemented |
+| `26.line-level-surcharge.invoice.json` | Line-level charge (BG-28)               | Implemented |
+| `27.reverse-charge-intra-eu-services.invoice.json` | §13b subcase: cross-border EU services (category AE) | Implemented |
+| `28.multiple-vat-rates.invoice.json`  | Multiple VAT rates (19%/7%) on one invoice | Implemented |
+| `29.reverse-charge-real-estate.invoice.json` | §13b subcase: real estate transfer (category AE) | Implemented |
+| `30.reverse-charge-telecommunications.invoice.json` | §13b subcase: telecommunications (category AE) | Implemented |
 
 Note: fixtures can't carry inline comments — they're loaded via `import ... with { type: "json" }` and
 validated against `schemas/invoice.schema.json`, which sets `"additionalProperties": false` at every level,
@@ -127,6 +133,31 @@ so any extra `_comment`-style key would fail schema validation. Explanations liv
   top, bringing `taxExclusiveAmount` to EUR 850. Exists specifically to prove the two allowance
   levels compose additively (`BT-109 = BT-106 − BT-107`, with `BT-106` already net of the line's
   own allowance) rather than one masking or double-subtracting the other.
+- **`25.document-level-surcharge.invoice.json`** — mirrors `22`, but the EUR 50 document-level
+  adjustment (`Expresszuschlag`, BG-21, category `S`/19%) is a charge (`isCharge: true`) rather
+  than an allowance, bringing `taxExclusiveAmount` *up* to EUR 1050 instead of down.
+- **`26.line-level-surcharge.invoice.json`** — mirrors `23`, but the EUR 50 line-level adjustment
+  (`Eilzuschlag`, BG-28) is a charge, so `lines[0].lineAmount` is EUR 1050 (quantity × unitPrice
+  plus the charge) rather than net of a discount.
+- **`27.reverse-charge-intra-eu-services.invoice.json`** — category `AE`, buyer in Austria
+  (`AT` VAT ID/address), a cross-border B2B consulting service taxable in Germany under §3a Abs. 2
+  UStG. Tests the `eu-cross-border-service` §13b Abs. 1 UStG subcase
+  (`checkReverseChargeSubcaseRequirements`, `validators/rules/15.reverse-charge.ts`) — distinct
+  from both the domestic §13b Abs. 2 subcases (`10`–`15`, `29`, `30`) and `08`'s category `K`
+  intra-EU goods supply, since this is a cross-border *service* reverse-charged to a German-taxable
+  transaction rather than a tax-free intra-Community goods delivery.
+- **`28.multiple-vat-rates.invoice.json`** — one invoice, two lines split across `S`/19%
+  (consulting) and `S`/7% (technical books, reduced rate per §12 Abs. 2 UStG), each in its own
+  `vatBreakdowns` entry. Tests that `VAT_TAXABLE_AMOUNT_MISMATCH` and the line-aggregation checks
+  (`validators/02.business-rules.ts`) work correctly per category/rate pair on the same document,
+  not just across single-rate fixtures.
+- **`29.reverse-charge-real-estate.invoice.json`** — category `AE`, sale of a commercial property
+  where the seller has opted into VAT liability under §9 UStG, making the transaction subject to
+  reverse charge under §13b Abs. 2 Nr. 3 UStG. Tests the `real-estate` subcase, one of the 7
+  §13b Abs. 2 subcases previously modeled in code but unfixtured (`docs/LIMITATIONS.md`).
+- **`30.reverse-charge-telecommunications.invoice.json`** — category `AE`, wholesale
+  telecommunications services sold to a reseller, reverse-charged under §13b Abs. 2 Nr. 12 UStG.
+  Tests the `telecommunications` subcase, closing another of the previously-unfixtured 7.
 
 ## References
 

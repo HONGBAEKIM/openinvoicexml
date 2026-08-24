@@ -1,0 +1,94 @@
+{
+  "id": "RE-2026-0050",
+  "typeCode": "380",
+  "issueDate": "2026-06-13",
+  "dueDate": "2026-07-13",
+  "currencyCode": "EUR",
+  "businessProcessType": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+  "buyerReference": "04011000-12345-03",
+
+  "seller": {
+    "name": "Max Mustermann GmbH",
+    "vatId": "DE123456789",
+    "address": {
+      "line1": "Unter den Linden 1",
+      "city": "Berlin",
+      "postalCode": "10117",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "rechnung@mustermann.example",
+    "electronicAddressSchemeId": "EM",
+    "contact": {
+      "name": "Buchhaltung",
+      "telephone": "+49 30 1234567",
+      "email": "buchhaltung@mustermann.example"
+    }
+  },
+
+  "buyer": {
+    "name": "Acme GmbH",
+    "vatId": "DE987654321",
+    "address": {
+      "line1": "Marienplatz 1",
+      "city": "München",
+      "postalCode": "80331",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "einkauf@acme.example",
+    "electronicAddressSchemeId": "EM"
+  },
+
+  "lines": [
+    {
+      "id": "1",
+      "name": "TypeScript Consulting",
+      "description": "Software architecture consulting, June 2026",
+      "quantity": 8,
+      "unitCode": "HUR",
+      "unitPrice": 125.0,
+      "lineAmount": 1000.0,
+      "vatCategoryCode": "S",
+      "vatRate": 19
+    },
+    {
+      "id": "2",
+      "name": "Fachliteratur",
+      "description": "Technische Fachbücher (ermäßigter Steuersatz gem. §12 Abs. 2 UStG)",
+      "quantity": 5,
+      "unitCode": "C62",
+      "unitPrice": 20.0,
+      "lineAmount": 100.0,
+      "vatCategoryCode": "S",
+      "vatRate": 7
+    }
+  ],
+
+  "vatBreakdowns": [
+    {
+      "categoryCode": "S",
+      "rate": 19,
+      "taxableAmount": 1000.0,
+      "taxAmount": 190.0
+    },
+    {
+      "categoryCode": "S",
+      "rate": 7,
+      "taxableAmount": 100.0,
+      "taxAmount": 7.0
+    }
+  ],
+
+  "taxExclusiveAmount": 1100.0,
+  "taxAmount": 197.0,
+  "taxInclusiveAmount": 1297.0,
+  "duePayableAmount": 1297.0,
+
+  "paymentMeans": {
+    "code": "58",
+    "iban": "DE89370400440532013000",
+    "accountName": "Max Mustermann GmbH",
+    "bic": "COBADEFFXXX"
+  },
+
+  "note": "Zahlbar innerhalb von 30 Tagen nach Rechnungsdatum."
+}

@@ -1,0 +1,80 @@
+{
+  "id": "RE-2026-0049",
+  "typeCode": "380",
+  "issueDate": "2026-06-12",
+  "dueDate": "2026-07-12",
+  "currencyCode": "EUR",
+  "businessProcessType": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+  "buyerReference": "04011000-12345-03",
+
+  "seller": {
+    "name": "Max Mustermann GmbH",
+    "vatId": "DE123456789",
+    "address": {
+      "line1": "Unter den Linden 1",
+      "city": "Berlin",
+      "postalCode": "10117",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "rechnung@mustermann.example",
+    "electronicAddressSchemeId": "EM",
+    "contact": {
+      "name": "Buchhaltung",
+      "telephone": "+49 30 1234567",
+      "email": "buchhaltung@mustermann.example"
+    }
+  },
+
+  "buyer": {
+    "name": "Alpin Consulting GmbH",
+    "vatId": "ATU12345678",
+    "address": {
+      "line1": "Kärntner Straße 12",
+      "city": "Wien",
+      "postalCode": "1010",
+      "countryCode": "AT"
+    },
+    "electronicAddress": "buchhaltung@alpin-consulting.example",
+    "electronicAddressSchemeId": "EM"
+  },
+
+  "lines": [
+    {
+      "id": "1",
+      "name": "IT-Beratungsleistung",
+      "description": "Grenzüberschreitende sonstige Leistung (Software-Architekturberatung) gem. §3a Abs. 2 UStG",
+      "quantity": 20,
+      "unitCode": "HUR",
+      "unitPrice": 100.0,
+      "lineAmount": 2000.0,
+      "vatCategoryCode": "AE",
+      "vatRate": 0
+    }
+  ],
+
+  "vatBreakdowns": [
+    {
+      "categoryCode": "AE",
+      "rate": 0,
+      "taxableAmount": 2000.0,
+      "taxAmount": 0.0,
+      "exemptionReason": "Steuerschuldnerschaft des Leistungsempfängers für grenzüberschreitende sonstige Leistungen im Gemeinschaftsgebiet gem. §13b Abs. 1 UStG",
+      "exemptionReasonCode": "VATEX-EU-AE",
+      "reverseChargeReason": "eu-cross-border-service"
+    }
+  ],
+
+  "taxExclusiveAmount": 2000.0,
+  "taxAmount": 0.0,
+  "taxInclusiveAmount": 2000.0,
+  "duePayableAmount": 2000.0,
+
+  "paymentMeans": {
+    "code": "58",
+    "iban": "DE89370400440532013000",
+    "accountName": "Max Mustermann GmbH",
+    "bic": "COBADEFFXXX"
+  },
+
+  "note": "Steuerschuldnerschaft des Leistungsempfängers (§13b Abs. 1 UStG, grenzüberschreitende sonstige Leistung im Gemeinschaftsgebiet)."
+}

@@ -1,0 +1,80 @@
+{
+  "id": "RE-2026-0061",
+  "typeCode": "380",
+  "issueDate": "2026-07-20",
+  "dueDate": "2026-08-19",
+  "currencyCode": "EUR",
+  "businessProcessType": "urn:fdc:peppol.eu:2017:poacc:billing:01:1.0",
+  "buyerReference": "04011000-12345-03",
+
+  "seller": {
+    "name": "Berlin Gewerbeimmobilien GmbH",
+    "vatId": "DE223456789",
+    "address": {
+      "line1": "Potsdamer Platz 3",
+      "city": "Berlin",
+      "postalCode": "10785",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "verwaltung@berlin-gewerbeimmobilien.example",
+    "electronicAddressSchemeId": "EM",
+    "contact": {
+      "name": "Buchhaltung",
+      "telephone": "+49 30 7654321",
+      "email": "buchhaltung@berlin-gewerbeimmobilien.example"
+    }
+  },
+
+  "buyer": {
+    "name": "Acme GmbH",
+    "vatId": "DE987654321",
+    "address": {
+      "line1": "Marienplatz 1",
+      "city": "München",
+      "postalCode": "80331",
+      "countryCode": "DE"
+    },
+    "electronicAddress": "einkauf@acme.example",
+    "electronicAddressSchemeId": "EM"
+  },
+
+  "lines": [
+    {
+      "id": "1",
+      "name": "Gewerbegrundstück Lagerhalle Nord",
+      "description": "Veräußerung eines Grunderwerbsteuer-unterliegenden Grundstücks mit Option zur Umsatzsteuerpflicht gem. §9 UStG",
+      "quantity": 1,
+      "unitCode": "C62",
+      "unitPrice": 500000.0,
+      "lineAmount": 500000.0,
+      "vatCategoryCode": "AE",
+      "vatRate": 0
+    }
+  ],
+
+  "vatBreakdowns": [
+    {
+      "categoryCode": "AE",
+      "rate": 0,
+      "taxableAmount": 500000.0,
+      "taxAmount": 0.0,
+      "exemptionReason": "Steuerschuldnerschaft des Leistungsempfängers für eine der Grunderwerbsteuer unterliegende Grundstücksveräußerung gem. §13b Abs. 2 Nr. 3 UStG (Option zur Steuerpflicht gem. §9 UStG)",
+      "exemptionReasonCode": "VATEX-EU-AE",
+      "reverseChargeReason": "real-estate"
+    }
+  ],
+
+  "taxExclusiveAmount": 500000.0,
+  "taxAmount": 0.0,
+  "taxInclusiveAmount": 500000.0,
+  "duePayableAmount": 500000.0,
+
+  "paymentMeans": {
+    "code": "58",
+    "iban": "DE89370400440532013000",
+    "accountName": "Berlin Gewerbeimmobilien GmbH",
+    "bic": "COBADEFFXXX"
+  },
+
+  "note": "Steuerschuldnerschaft des Leistungsempfängers (§13b Abs. 2 Nr. 3 UStG, Grundstücksveräußerung mit Option zur Steuerpflicht)."
+}

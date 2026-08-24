@@ -22,6 +22,12 @@ import partialDelivery from "./21.partial-delivery.invoice.json" with { type: "j
 import documentLevelDiscount from "./22.document-level-discount.invoice.json" with { type: "json" };
 import lineLevelDiscount from "./23.line-level-discount.invoice.json" with { type: "json" };
 import combinedLineAndDocumentDiscount from "./24.combined-line-and-document-discount.invoice.json" with { type: "json" };
+import documentLevelSurcharge from "./25.document-level-surcharge.invoice.json" with { type: "json" };
+import lineLevelSurcharge from "./26.line-level-surcharge.invoice.json" with { type: "json" };
+import reverseChargeIntraEuServices from "./27.reverse-charge-intra-eu-services.invoice.json" with { type: "json" };
+import multipleVatRates from "./28.multiple-vat-rates.invoice.json" with { type: "json" };
+import reverseChargeRealEstate from "./29.reverse-charge-real-estate.invoice.json" with { type: "json" };
+import reverseChargeTelecommunications from "./30.reverse-charge-telecommunications.invoice.json" with { type: "json" };
 
 export {
   domesticSimple,
@@ -48,10 +54,16 @@ export {
   documentLevelDiscount,
   lineLevelDiscount,
   combinedLineAndDocumentDiscount,
+  documentLevelSurcharge,
+  lineLevelSurcharge,
+  reverseChargeIntraEuServices,
+  multipleVatRates,
+  reverseChargeRealEstate,
+  reverseChargeTelecommunications,
 };
 
 /**
- * All 24 fixtures as [label, data] pairs, in fixture-number order. Each label is numbered
+ * All 30 fixtures as [label, data] pairs, in fixture-number order. Each label is numbered
  * (matching the fixture's filename prefix) and annotated with its VAT category, so it shows
  * up that way in every test runner's output, wherever this list is consumed.
  */
@@ -80,4 +92,10 @@ export const allFixtures: [string, unknown][] = [
   ["22. document-level-discount (19% S)", documentLevelDiscount],
   ["23. line-level-discount (19% S)", lineLevelDiscount],
   ["24. combined-line-and-document-discount (19% S)", combinedLineAndDocumentDiscount],
+  ["25. document-level-surcharge (19% S)", documentLevelSurcharge],
+  ["26. line-level-surcharge (19% S)", lineLevelSurcharge],
+  ["27. reverse-charge-intra-eu-services (AE)", reverseChargeIntraEuServices],
+  ["28. multiple-vat-rates (19%/7% S)", multipleVatRates],
+  ["29. reverse-charge-real-estate (AE)", reverseChargeRealEstate],
+  ["30. reverse-charge-telecommunications (AE)", reverseChargeTelecommunications],
 ];
