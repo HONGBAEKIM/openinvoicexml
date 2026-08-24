@@ -15,6 +15,7 @@ import exportInvoice from "../fixtures/09.export.invoice.json" with { type: "jso
 import reverseChargeConstruction from "../fixtures/10.reverse-charge-construction.invoice.json" with { type: "json" };
 import reverseChargeScrapMetal from "../fixtures/11.reverse-charge-scrap-metal.invoice.json" with { type: "json" };
 import creditNoteFull from "../fixtures/16.credit-note-full.invoice.json" with { type: "json" };
+import combinedLineAndDocumentDiscount from "../fixtures/24.combined-line-and-document-discount.invoice.json" with { type: "json" };
 
 const fixtures: [string, unknown][] = [
   ["domestic-simple", domesticSimple],
@@ -266,6 +267,55 @@ describe("toXRechnung", () => {
 
       expect(classifiedTaxCategory).toContain("<cbc:ID>O</cbc:ID>");
       expect(classifiedTaxCategory).not.toContain("<cbc:Percent>");
+    });
+
+    it("omits the document-level allowance/charge VAT Percent element (BR-O-06/07)", () => {
+      const invoice: Invoice = {
+        ...(domesticSimple as unknown as Invoice),
+        allowancesCharges: [
+          { amount: 10, isCharge: false, vatCategoryCode: "O", vatRate: 0 },
+        ],
+      };
+      const xml = toXRechnung(invoice);
+      const start = xml.indexOf("<cac:AllowanceCharge>");
+      const end = xml.indexOf("</cac:AllowanceCharge>") + "</cac:AllowanceCharge>".length;
+      const allowanceCharge = xml.slice(start, end);
+
+      expect(allowanceCharge).toContain("<cbc:ID>O</cbc:ID>");
+      expect(allowanceCharge).not.toContain("<cbc:Percent>");
+    });
+  });
+
+  describe("combined document-level and line-level allowances", () => {
+    it("renders both an InvoiceLine-level and a document-level cac:AllowanceCharge without double-counting", () => {
+      const xml = toXRechnung(combinedLineAndDocumentDiscount as unknown as Invoice);
+      const allowanceCharges = [...xml.matchAll(/<cac:AllowanceCharge>[\s\S]*?<\/cac:AllowanceCharge>/g)].map(
+        (m) => m[0],
+      );
+
+      // for the combined documet-level and line-level
+      expect(allowanceCharges).toHaveLength(2);
+
+      // line-level
+      const lineAllowanceCharge = allowanceCharges.find((ac) => !ac.includes("<cac:TaxCategory>"));
+      expect(lineAllowanceCharge).toContain("<cbc:ChargeIndicator>false</cbc:ChargeIndicator>");
+      expect(lineAllowanceCharge).toContain('<cbc:Amount currencyID="EUR">100.00</cbc:Amount>');
+      expect(lineAllowanceCharge).toContain("<cbc:AllowanceChargeReason>Treuerabatt</cbc:AllowanceChargeReason>");
+
+      // document-level
+      const documentAllowanceCharge = allowanceCharges.find((ac) => ac.includes("<cac:TaxCategory>"));
+      expect(documentAllowanceCharge).toContain("<cbc:ChargeIndicator>false</cbc:ChargeIndicator>");
+      expect(documentAllowanceCharge).toContain('<cbc:Amount currencyID="EUR">50.00</cbc:Amount>');
+      expect(documentAllowanceCharge).toContain("<cbc:AllowanceChargeReason>Sammelrabatt</cbc:AllowanceChargeReason>");
+      expect(documentAllowanceCharge).toContain("<cbc:ID>S</cbc:ID>");
+
+      // €1000 line − €100 line allowance − €50 document allowance = €850 taxable, +19% VAT = €1011.50 —
+      // proving the two allowance levels compose additively rather than one masking or double-subtracting the other.
+      const start = xml.indexOf("<cac:LegalMonetaryTotal>");
+      const end = xml.indexOf("</cac:LegalMonetaryTotal>") + "</cac:LegalMonetaryTotal>".length;
+      const legalMonetaryTotal = xml.slice(start, end);
+      expect(legalMonetaryTotal).toContain('<cbc:TaxExclusiveAmount currencyID="EUR">850.00</cbc:TaxExclusiveAmount>');
+      expect(legalMonetaryTotal).toContain('<cbc:TaxInclusiveAmount currencyID="EUR">1011.50</cbc:TaxInclusiveAmount>');
     });
   });
 

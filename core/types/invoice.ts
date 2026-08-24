@@ -1,6 +1,7 @@
 import type { InvoiceLine } from "./invoice-line.js";
 import type { Party } from "./party.js";
 import type { VatBreakdown } from "./vat-breakdown.js";
+import type { AllowanceCharge } from "./allowance-charge.js";
 
 /** Document type codes per EN 16931 / XRechnung. */
 export type InvoiceTypeCode =
@@ -36,6 +37,9 @@ export interface Invoice {
   lines: InvoiceLine[];
   /** BG-23: VAT breakdown by tax category. */
   vatBreakdowns: VatBreakdown[];
+
+  /** BG-20/BG-21: Document-level allowances (discounts) and charges (surcharges). */
+  allowancesCharges?: AllowanceCharge[];
 
   /** BT-109: Invoice total amount without VAT. */
   taxExclusiveAmount: number;

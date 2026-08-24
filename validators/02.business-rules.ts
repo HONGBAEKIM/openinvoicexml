@@ -1,4 +1,5 @@
 import type { Invoice } from "../core/types/invoice.js";
+import type { AllowanceCharge } from "../core/types/allowance-charge.js";
 import type { ValidationIssue } from "./types.js";
 import { isClose, round2 } from "../core/utils/monetary.js";
 import { resolvePlaceOfSupply } from "../core/utils/place-of-supply.js";
@@ -14,8 +15,14 @@ import { checkDeliveryAddressRequirements } from "./rules/11.delivery.js";
 import { checkExportRequirements } from "./rules/12.export.js";
 import { checkReverseChargeSubcaseRequirements } from "./rules/15.reverse-charge.js";
 import { checkCreditNoteAndCorrectionRequirements } from "./rules/10.credit-note.js";
+import { checkAllowanceChargeRequirements } from "./rules/18.allowance-charge.js";
 
 export type { ValidationIssue } from "./types.js";
+
+/** Net effect of a set of allowances/charges: charges add, allowances (discounts) subtract. */
+function netAllowanceChargeAdjustment(items: AllowanceCharge[] | undefined): number {
+  return (items ?? []).reduce((sum, ac) => sum + (ac.isCharge ? ac.amount : -ac.amount), 0);
+}
 
 /**
  * Checks an invoice against EN 16931 / XRechnung business rules that go beyond
@@ -38,12 +45,16 @@ export function validateBusinessRules(invoice: Invoice): ValidationIssue[] {
     checkDecimalPrecision(line.unitPrice, `${path}.unitPrice`, issues);
     checkDecimalPrecision(line.lineAmount, `${path}.lineAmount`, issues);
 
-    const expectedLineAmount = round2(line.quantity * line.unitPrice);
+    // BT-131 = quantity × unitPrice, adjusted by this line's own allowances/charges
+    // (BG-27/BG-28) — subtract allowances (discounts), add charges (surcharges).
+    const expectedLineAmount = round2(
+      line.quantity * line.unitPrice + netAllowanceChargeAdjustment(line.allowancesCharges),
+    );
     if (!isClose(line.lineAmount, expectedLineAmount)) {
       issues.push({
         code: "LINE_AMOUNT_ROUNDING",
         severity: "error",
-        message: `${path}.lineAmount: BT-131 line net amount ${line.lineAmount} does not match quantity × unit price (${expectedLineAmount}).`,
+        message: `${path}.lineAmount: BT-131 line net amount ${line.lineAmount} does not match quantity × unit price adjusted for line-level allowances/charges (${expectedLineAmount}).`,
         path: `${path}.lineAmount`,
       });
     }
@@ -109,6 +120,12 @@ export function validateBusinessRules(invoice: Invoice): ValidationIssue[] {
     });
   }
 
+  // --- Allowances/charges (BG-20/BG-21 document-level, BG-27/BG-28 line-level) --------
+  // Reason and, for document-level entries, VAT category/rate requirements — the amount
+  // itself is already covered by LINE_AMOUNT_ROUNDING above and VAT_TAXABLE_AMOUNT_MISMATCH
+  // below.
+  checkAllowanceChargeRequirements(invoice, issues);
+
   // --- VAT breakdown checks -----------------------------------------------
   let totalTaxableAmount = 0;
   let totalTaxAmount = 0;
@@ -159,8 +176,15 @@ export function validateBusinessRules(invoice: Invoice): ValidationIssue[] {
       });
     }
 
+    // BT-116 = sum of matching line amounts (already net of line-level allowances/charges),
+    // further adjusted by any document-level allowances/charges (BG-20/BG-21) assigned to
+    // this same VAT category/rate.
+    const docAdjustmentsForCategory = (invoice.allowancesCharges ?? []).filter(
+      (ac) => ac.vatCategoryCode === vb.categoryCode && ac.vatRate === vb.rate,
+    );
     const expectedTaxableAmount = round2(
-      linesForCategory.reduce((sum, line) => sum + line.lineAmount, 0),
+      linesForCategory.reduce((sum, line) => sum + line.lineAmount, 0) +
+        netAllowanceChargeAdjustment(docAdjustmentsForCategory),
     );
     if (!isClose(vb.taxableAmount, expectedTaxableAmount)) {
       issues.push({
@@ -194,7 +218,9 @@ export function validateBusinessRules(invoice: Invoice): ValidationIssue[] {
   checkDecimalPrecision(invoice.taxInclusiveAmount, "taxInclusiveAmount", issues);
   checkDecimalPrecision(invoice.duePayableAmount, "duePayableAmount", issues);
 
-  // BT-109 taxExclusiveAmount = sum of all breakdown taxableAmounts.
+  // BT-109 taxExclusiveAmount = sum of all breakdown taxableAmounts. Each taxableAmount
+  // (BT-116) already folds in that category's document-level allowances/charges via the
+  // VAT_TAXABLE_AMOUNT_MISMATCH check above, so no separate adjustment is needed here.
   if (!isClose(invoice.taxExclusiveAmount, totalTaxableAmount)) {
     issues.push({
       code: "INVOICE_TAX_EXCLUSIVE_AMOUNT_MISMATCH",

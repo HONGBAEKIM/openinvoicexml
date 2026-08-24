@@ -9,6 +9,16 @@ uses AJV only in its own test suite — see [`ARCHITECTURE.md`](ARCHITECTURE.md#
 Business-rule validation (VAT arithmetic, §13b buyer-VAT-ID requirement, etc.) is a separate
 layer — `validateBusinessRules()` (see [`ARCHITECTURE.md`](ARCHITECTURE.md#validators)).
 
+```
+invoice.schema.json
+        ↓
+       AJV
+        ↓
+checks invoice data
+        ↓
+Valid ✅ or Invalid ❌
+```
+
 ### Field naming conventions
 
 - **camelCase** throughout, matching TypeScript.
@@ -200,6 +210,61 @@ One `cac:TaxSubtotal` per entry in `vatBreakdowns`.
 
 `duePayableAmount` must equal `taxInclusiveAmount - prepaidAmount`.
 
+`taxExclusiveAmount` (BT-109) = Σ VAT breakdown taxable amounts (BT-116). Each breakdown's
+taxable amount is the sum of matching line amounts (already net of that line's own BG-27/28
+allowances/charges) further adjusted by any BG-20/21 document-level allowances/charges assigned
+to that same VAT category — see "Allowances and charges" below. Equivalently,
+BT-109 = BT-106 (sum of line net amounts) − BT-107 (sum of document-level allowances) + BT-108
+(sum of document-level charges); `adapters/xrechnung.ts` emits BT-107/BT-108 as
+`cbc:AllowanceTotalAmount`/`cbc:ChargeTotalAmount` whenever document-level allowances/charges
+exist (required by BR-CO-11/BR-CO-13).
+
+### Allowances and charges (BG-20/BG-21 document-level, BG-27/BG-28 line-level)
+
+One `cac:AllowanceCharge` per entry in `allowancesCharges`, at both document level
+(`Invoice.allowancesCharges`, before `cac:TaxTotal`) and line level
+(`InvoiceLine.allowancesCharges`, inside `cac:InvoiceLine`, before `cac:Item`).
+`isCharge` maps to `cbc:ChargeIndicator` (`false` = allowance/discount, `true` = charge/surcharge).
+
+`vatCategoryCode` is required for document-level allowances/charges (BR-32/BR-37). `vatRate` then
+follows the rules of that VAT category — `S` > 0 (BR-S-06/07, restricted to 19/7 like every other
+`S`-category rate check in this codebase), `Z`/`E`/`AE`/`K`/`G` = 0 (BR-Z-06/07, BR-E-06/07,
+BR-AE-06/07, BR-G-06/07), and `O` must have no `vatRate` at all (BR-O-06/07). These render as
+`cac:TaxCategory`. Line-level allowances/charges don't carry their own `vatCategoryCode`/`vatRate`
+— they inherit the VAT category/rate of their invoice line instead. Enforced by
+`checkAllowanceChargeRequirements` in `validators/rules/18.allowance-charge.ts`.
+
+For every allowance/charge — document or line level, allowance or charge — at least one of
+`reason` or `reasonCode` is required (BR-33/BR-38/BR-42/BR-44, and independently BR-CO-21 through
+BR-CO-24); both may be provided. Also enforced by `checkAllowanceChargeRequirements`.
+
+| BT     | Name                          | Internal field                             | UBL element                        |
+| ------ | ------------------------------- | --------------------------------------------- | -------------------------------------- |
+| BT-92  | Document allowance amount     | `allowancesCharges[i].amount` (isCharge=false) | `cbc:Amount`                       |
+| BT-97  | Document allowance reason     | `allowancesCharges[i].reason`               | `cbc:AllowanceChargeReason`        |
+| BT-98  | Document allowance reason code | `allowancesCharges[i].reasonCode`           | `cbc:AllowanceChargeReasonCode`    |
+| BT-95  | Document allowance VAT category | `allowancesCharges[i].vatCategoryCode`     | `cac:TaxCategory/cbc:ID`           |
+| BT-96  | Document allowance VAT rate   | `allowancesCharges[i].vatRate`              | `cac:TaxCategory/cbc:Percent`      |
+| BT-99  | Document charge amount        | `allowancesCharges[i].amount` (isCharge=true) | `cbc:Amount`                       |
+| BT-104 | Document charge reason        | `allowancesCharges[i].reason`               | `cbc:AllowanceChargeReason`        |
+| BT-105 | Document charge reason code   | `allowancesCharges[i].reasonCode`           | `cbc:AllowanceChargeReasonCode`    |
+| BT-102 | Document charge VAT category  | `allowancesCharges[i].vatCategoryCode`      | `cac:TaxCategory/cbc:ID`           |
+| BT-103 | Document charge VAT rate      | `allowancesCharges[i].vatRate`              | `cac:TaxCategory/cbc:Percent`      |
+| BT-107 | Sum of document-level allowances | derived: Σ document-level allowance amounts | `cbc:AllowanceTotalAmount`      |
+| BT-108 | Sum of document-level charges | derived: Σ document-level charge amounts    | `cbc:ChargeTotalAmount`            |
+| BT-136 | Line allowance amount         | `lines[i].allowancesCharges[j].amount` (isCharge=false) | `cbc:Amount`            |
+| BT-139 | Line allowance reason         | `lines[i].allowancesCharges[j].reason`      | `cbc:AllowanceChargeReason`        |
+| BT-140 | Line allowance reason code    | `lines[i].allowancesCharges[j].reasonCode`  | `cbc:AllowanceChargeReasonCode`    |
+| BT-141 | Line charge amount            | `lines[i].allowancesCharges[j].amount` (isCharge=true) | `cbc:Amount`             |
+| BT-144 | Line charge reason            | `lines[i].allowancesCharges[j].reason`      | `cbc:AllowanceChargeReason`        |
+| BT-145 | Line charge reason code       | `lines[i].allowancesCharges[j].reasonCode`  | `cbc:AllowanceChargeReasonCode`    |
+
+Base amount (BT-93/BT-100/BT-137/BT-142) and percentage (BT-94/BT-101/BT-138/BT-143) — the
+alternative way to express an allowance/charge as a rate against a base rather than a flat
+amount — are not modeled; only the flat `amount` form is supported. `lines[i].lineAmount` (BT-131)
+must equal `quantity × unitPrice` adjusted by that line's own allowances/charges (subtract
+allowances, add charges); see `validators/02.business-rules.ts`'s `LINE_AMOUNT_ROUNDING` check.
+
 ### Invoice lines (BG-25)
 
 One `cac:InvoiceLine` per entry in `lines` (`cac:CreditNoteLine` / `cbc:CreditedQuantity` for
@@ -222,8 +287,6 @@ credit notes).
 - **BT-11**: Project reference
 - **BT-17**: Tender or lot reference
 - **BG-24**: Additional supporting documents
-- **BG-20 / BG-21**: Document-level allowances and charges
-- **BG-27 / BG-28**: Line-level allowances and charges
 
 ---
 

@@ -1,4 +1,5 @@
 import type { VatCategoryCode } from "./vat-breakdown.js";
+import type { AllowanceCharge } from "./allowance-charge.js";
 
 /** BG-25: A single line item on an invoice. */
 export interface InvoiceLine {
@@ -23,4 +24,7 @@ export interface InvoiceLine {
   vatCategoryCode: VatCategoryCode;
   /** BT-152: VAT rate as a percentage (e.g. 19, 7, 0). */
   vatRate: number;
+
+  /** BG-27/BG-28: Line-level allowances (discounts) and charges (surcharges). */
+  allowancesCharges?: AllowanceCharge[];
 }

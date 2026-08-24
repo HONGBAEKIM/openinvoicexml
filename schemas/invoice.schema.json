@@ -71,6 +71,11 @@
       "items": { "$ref": "#/$defs/VatBreakdown" },
       "description": "BG-23: VAT breakdown by tax category. At least one entry is required."
     },
+    "allowancesCharges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/AllowanceCharge" },
+      "description": "BG-20 / BG-21: Document-level allowances (discounts) and charges (surcharges)."
+    },
     "taxExclusiveAmount": {
       "type": "number",
       "description": "BT-109: Invoice total amount without VAT (sum of all line amounts). Required by §14 Abs. 4 Nr. 7 UStG."
@@ -335,6 +340,11 @@
           "minimum": 0,
           "maximum": 100,
           "description": "BT-152: VAT rate as a percentage (e.g. 19, 7, 0). Required by §14 Abs. 4 Nr. 8 UStG."
+        },
+        "allowancesCharges": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/AllowanceCharge" },
+          "description": "BG-27 / BG-28: Line-level allowances (discounts) and charges (surcharges)."
         }
       }
     },
@@ -388,6 +398,40 @@
             "telecommunications"
           ],
           "description": "§13b UStG reverse-charge subcase (category 'AE' only). Internal only — not emitted to XML; VATEX has no per-subcase code."
+        }
+      }
+    },
+    "AllowanceCharge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["amount", "isCharge"],
+      "properties": {
+        "amount": {
+          "type": "number",
+          "description": "BT-92/BT-99 (document) or BT-136/BT-141 (line): allowance or charge amount."
+        },
+        "isCharge": {
+          "type": "boolean",
+          "description": "UBL cbc:ChargeIndicator — false = allowance/discount (BG-20/BG-27), true = charge/surcharge (BG-21/BG-28)."
+        },
+        "reason": {
+          "type": "string",
+          "description": "BT-97/BT-104 (document) or BT-139/BT-144 (line): reason text."
+        },
+        "reasonCode": {
+          "type": "string",
+          "description": "BT-98/BT-105 (document) or BT-140/BT-145 (line): reason code."
+        },
+        "vatCategoryCode": {
+          "type": "string",
+          "enum": ["S", "Z", "E", "AE", "K", "G", "O"],
+          "description": "BT-95/BT-102: VAT category code. Document-level only — line-level allowances/charges inherit the line's own vatCategoryCode/vatRate instead."
+        },
+        "vatRate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "BT-96/BT-103: VAT rate as a percentage. Document-level only."
         }
       }
     }

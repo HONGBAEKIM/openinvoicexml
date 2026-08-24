@@ -1,4 +1,4 @@
-import type { Invoice, Party, VatBreakdown, InvoiceLine } from "../core/index.js";
+import type { Invoice, Party, VatBreakdown, InvoiceLine, AllowanceCharge } from "../core/index.js";
 
 /**
  * Field mapping — resolves the internal Invoice model (and its nested types) into plain,
@@ -72,6 +72,26 @@ export function mapVatSubtotal(bd: VatBreakdown): VatSubtotalFields {
   };
 }
 
+export interface AllowanceChargeFields {
+  amount: number;
+  isCharge: boolean;
+  reason?: string | undefined;
+  reasonCode?: string | undefined;
+  vatCategoryCode?: string | undefined;
+  vatRate?: number | undefined;
+}
+
+export function mapAllowanceCharge(ac: AllowanceCharge): AllowanceChargeFields {
+  return {
+    amount: ac.amount,
+    isCharge: ac.isCharge,
+    reason: ac.reason,
+    reasonCode: ac.reasonCode,
+    vatCategoryCode: ac.vatCategoryCode,
+    vatRate: ac.vatRate,
+  };
+}
+
 export interface LineFields {
   id: string;
   name: string;
@@ -82,6 +102,7 @@ export interface LineFields {
   lineAmount: number;
   vatCategoryCode: string;
   vatRate: number;
+  allowancesCharges: AllowanceChargeFields[];
 }
 
 export function mapLine(line: InvoiceLine): LineFields {
@@ -95,6 +116,7 @@ export function mapLine(line: InvoiceLine): LineFields {
     lineAmount: line.lineAmount,
     vatCategoryCode: line.vatCategoryCode,
     vatRate: line.vatRate,
+    allowancesCharges: (line.allowancesCharges ?? []).map(mapAllowanceCharge),
   };
 }
 
@@ -155,7 +177,12 @@ export interface DocumentFields {
   paymentMeans?: PaymentMeansFields | undefined;
   taxAmount: number;
   vatSubtotals: VatSubtotalFields[];
+  allowancesCharges: AllowanceChargeFields[];
   lineExtensionAmount: number;
+  /** BT-107: Sum of document-level allowance amounts — 0 when there are none. */
+  allowanceTotalAmount: number;
+  /** BT-108: Sum of document-level charge amounts — 0 when there are none. */
+  chargeTotalAmount: number;
   taxExclusiveAmount: number;
   taxInclusiveAmount: number;
   duePayableAmount: number;
@@ -168,6 +195,14 @@ export interface DocumentFields {
 // using reduce() many items -> one value
 function sumLineAmounts(lines: InvoiceLine[]): number {
   return lines.reduce((sum, line) => sum + line.lineAmount, 0);
+}
+
+/** BT-107/BT-108: sum of document-level allowance or charge amounts — derived, not stored. */
+function sumAllowancesCharges(items: AllowanceCharge[] | undefined, isCharge: boolean): number {
+  return (items ?? [])
+    // isCharge === true | isCharge === false
+    .filter((ac) => ac.isCharge === isCharge)
+    .reduce((sum, ac) => sum + ac.amount, 0);
 }
 
 export function mapInvoice(invoice: Invoice): DocumentFields {
@@ -191,7 +226,10 @@ export function mapInvoice(invoice: Invoice): DocumentFields {
     paymentMeans: invoice.paymentMeans ? mapPaymentMeans(invoice.paymentMeans) : undefined,
     taxAmount: invoice.taxAmount,
     vatSubtotals: invoice.vatBreakdowns.map(mapVatSubtotal),
+    allowancesCharges: (invoice.allowancesCharges ?? []).map(mapAllowanceCharge),
     lineExtensionAmount: sumLineAmounts(invoice.lines),
+    allowanceTotalAmount: sumAllowancesCharges(invoice.allowancesCharges, false),
+    chargeTotalAmount: sumAllowancesCharges(invoice.allowancesCharges, true),
     taxExclusiveAmount: invoice.taxExclusiveAmount,
     taxInclusiveAmount: invoice.taxInclusiveAmount,
     duePayableAmount: invoice.duePayableAmount,

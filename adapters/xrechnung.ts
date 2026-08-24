@@ -8,6 +8,7 @@ import {
   type LineFields,
   type DeliveryFields,
   type PrecedingInvoiceReferenceFields,
+  type AllowanceChargeFields,
 } from "./xrechnung-mapping.js";
 
 /**
@@ -116,6 +117,38 @@ function renderVatSubtotal(bd: VatSubtotalFields, currency: string): string {
     </cac:TaxSubtotal>`;
 }
 
+// BG-20/BG-21 = document-level discounts/charges.
+// BG-27/BG-28 = line-level discounts/charges.
+//
+// UBL requires this order:
+// ChargeIndicator → reason → Amount → TaxCategory.
+//
+// TaxCategory is only added for document-level discounts/charges.
+// Line-level discounts/charges use the VAT category of their invoice line.
+function renderAllowanceCharge(ac: AllowanceChargeFields, currency: string): string {
+  const reasonCode = ac.reasonCode
+    ? `\n      <cbc:AllowanceChargeReasonCode>${esc(ac.reasonCode)}</cbc:AllowanceChargeReasonCode>`
+    : "";
+  const reason = ac.reason
+    ? `\n      <cbc:AllowanceChargeReason>${esc(ac.reason)}</cbc:AllowanceChargeReason>`
+    : "";
+  // BR-O-06/07: category 'O' must have no cbc:Percent at all (not even 0) — mirrors
+  // renderLine's own category-'O' cbc:Percent suppression below.
+  const percent =
+    ac.vatCategoryCode === "O" || ac.vatRate === undefined
+      ? ""
+      : `\n        <cbc:Percent>${ac.vatRate}</cbc:Percent>`;
+  const taxCategory =
+    ac.vatCategoryCode !== undefined
+      ? `\n      <cac:TaxCategory>\n        <cbc:ID>${ac.vatCategoryCode}</cbc:ID>${percent}\n        <cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme>\n      </cac:TaxCategory>`
+      : "";
+
+  return `    <cac:AllowanceCharge>
+      <cbc:ChargeIndicator>${ac.isCharge}</cbc:ChargeIndicator>${reasonCode}${reason}
+      <cbc:Amount currencyID="${currency}">${amt(ac.amount)}</cbc:Amount>${taxCategory}
+    </cac:AllowanceCharge>`;
+}
+
 function renderLine(line: LineFields, currency: string, isCreditNote: boolean): string {
   const description = line.description
     ? `\n      <cbc:Description>${esc(line.description)}</cbc:Description>`
@@ -129,11 +162,16 @@ function renderLine(line: LineFields, currency: string, isCreditNote: boolean): 
   // cac:InvoiceLine/cbc:InvoicedQuantity used by every other document type.
   const lineTag = isCreditNote ? "CreditNoteLine" : "InvoiceLine";
   const quantityTag = isCreditNote ? "CreditedQuantity" : "InvoicedQuantity";
+  // BG-27/BG-28: cac:AllowanceCharge sits between LineExtensionAmount and Item in
+  // InvoiceLineType's fixed element sequence (UBL-CommonAggregateComponents-2.1.xsd).
+  const lineAllowancesCharges = line.allowancesCharges.length
+    ? `\n${line.allowancesCharges.map((ac) => renderAllowanceCharge(ac, currency)).join("\n")}`
+    : "";
 
   return `  <cac:${lineTag}>
     <cbc:ID>${esc(line.id)}</cbc:ID>
     <cbc:${quantityTag} unitCode="${esc(line.unitCode)}">${line.quantity}</cbc:${quantityTag}>
-    <cbc:LineExtensionAmount currencyID="${currency}">${amt(line.lineAmount)}</cbc:LineExtensionAmount>
+    <cbc:LineExtensionAmount currencyID="${currency}">${amt(line.lineAmount)}</cbc:LineExtensionAmount>${lineAllowancesCharges}
     <cac:Item>${description}
       <cbc:Name>${esc(line.name)}</cbc:Name>
       <cac:ClassifiedTaxCategory>
@@ -183,12 +221,37 @@ export function toXRechnung(invoice: Invoice): string {
     : "";
   const delivery = fields.delivery ? `\n${renderDelivery(fields.delivery)}` : "";
   const paymentMeans = fields.paymentMeans ? `\n${renderPaymentMeans(fields.paymentMeans)}` : "";
+  // BG-20/BG-21: document-level discounts/charges must come before cac:TaxTotal.
+  // Since this invoice does not use PaymentTerms or PrepaidPayment,
+  // they are added directly after PaymentMeans.
+  const documentAllowancesCharges = fields.allowancesCharges.length
+    ? `\n${fields.allowancesCharges.map((ac) => renderAllowanceCharge(ac, currency)).join("\n")}`
+    : "";
   // CreditNoteType has no cbc:DueDate element at all (UBL-CreditNote-2.1.xsd) — a credit
   // reduces what's owed, it doesn't create a new payment deadline.
   const dueDate =
     !isCreditNote && fields.dueDate ? `\n  <cbc:DueDate>${fields.dueDate}</cbc:DueDate>` : "";
   const prepaidAmount = fields.prepaidAmount
     ? `\n    <cbc:PrepaidAmount currencyID="${currency}">${amt(fields.prepaidAmount)}</cbc:PrepaidAmount>`
+    : "";
+  // Line-level discounts/charges change BT-131.
+  //
+  // BT-106 = sum of all line net amounts.
+  // BT-107 = sum of document-level discounts. sum of BG-20
+  // BT-108 = sum of document-level charges. sum of BG-21
+  // BT-109 = total amount before VAT.
+  //
+  // Formula:
+  // BT-109 = BT-106 - BT-107 + BT-108
+  //
+  // In UBL, AllowanceTotalAmount (BT-107) and ChargeTotalAmount (BT-108)
+  // must appear between TaxInclusiveAmount and PrepaidAmount in MonetaryTotalType's fixed order.
+  // They are required when document-level allowances/charges exist.
+  const allowanceTotalAmount = fields.allowanceTotalAmount
+    ? `\n    <cbc:AllowanceTotalAmount currencyID="${currency}">${amt(fields.allowanceTotalAmount)}</cbc:AllowanceTotalAmount>`
+    : "";
+  const chargeTotalAmount = fields.chargeTotalAmount
+    ? `\n    <cbc:ChargeTotalAmount currencyID="${currency}">${amt(fields.chargeTotalAmount)}</cbc:ChargeTotalAmount>`
     : "";
 
   const lineExtension = amt(fields.lineExtensionAmount);
@@ -215,7 +278,7 @@ export function toXRechnung(invoice: Invoice): string {
   <cbc:${typeCodeTag}>${fields.typeCode}</cbc:${typeCodeTag}>${note}
   <cbc:DocumentCurrencyCode>${currency}</cbc:DocumentCurrencyCode>${buyerRef}${orderReference}${billingReference}${contractReference}
 ${renderParty("cac:AccountingSupplierParty", fields.seller)}
-${renderParty("cac:AccountingCustomerParty", fields.buyer)}${delivery}${paymentMeans}
+${renderParty("cac:AccountingCustomerParty", fields.buyer)}${delivery}${paymentMeans}${documentAllowancesCharges}
   <cac:TaxTotal>
     <cbc:TaxAmount currencyID="${currency}">${amt(fields.taxAmount)}</cbc:TaxAmount>
 ${vatSubtotals}
@@ -223,7 +286,7 @@ ${vatSubtotals}
   <cac:LegalMonetaryTotal>
     <cbc:LineExtensionAmount currencyID="${currency}">${lineExtension}</cbc:LineExtensionAmount>
     <cbc:TaxExclusiveAmount currencyID="${currency}">${amt(fields.taxExclusiveAmount)}</cbc:TaxExclusiveAmount>
-    <cbc:TaxInclusiveAmount currencyID="${currency}">${amt(fields.taxInclusiveAmount)}</cbc:TaxInclusiveAmount>${prepaidAmount}
+    <cbc:TaxInclusiveAmount currencyID="${currency}">${amt(fields.taxInclusiveAmount)}</cbc:TaxInclusiveAmount>${allowanceTotalAmount}${chargeTotalAmount}${prepaidAmount}
     <cbc:PayableAmount currencyID="${currency}">${amt(fields.duePayableAmount)}</cbc:PayableAmount>
   </cac:LegalMonetaryTotal>
 ${invoiceLines}

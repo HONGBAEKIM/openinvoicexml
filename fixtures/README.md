@@ -28,6 +28,9 @@ expected XRechnung XML output once Phase 2 is complete.
 | `19.down-payment.invoice.json`        | Down payment invoice (Anzahlungsrechnung)          | Implemented |
 | `20.final-invoice.invoice.json`       | Final invoice (Schlussrechnung) deducting a down payment | Implemented |
 | `21.partial-delivery.invoice.json`    | Partial delivery invoice (Teilrechnung) with contract reference | Implemented |
+| `22.document-level-discount.invoice.json` | Document-level allowance (BG-20)         | Implemented |
+| `23.line-level-discount.invoice.json` | Line-level allowance (BG-27)             | Implemented |
+| `24.combined-line-and-document-discount.invoice.json` | Both a line-level and a document-level allowance together | Implemented |
 
 Note: fixtures can't carry inline comments — they're loaded via `import ... with { type: "json" }` and
 validated against `schemas/invoice.schema.json`, which sets `"additionalProperties": false` at every level,
@@ -108,6 +111,22 @@ so any extra `_comment`-style key would fail schema validation. Explanations liv
   `note` (BT-22) rather than a dedicated schema field — EN 16931/XRechnung ([en16931]) has no BT for
   either, so inventing one would be unvalidatable by KoSIT and unrecognized by any receiving system
   (see `docs/LIMITATIONS.md`).
+- **`22.document-level-discount.invoice.json`** — typeCode `380`, a EUR 1000 net line (8 HUR ×
+  EUR 125) with a EUR 100 document-level allowance (BG-20, `Sammelrabatt`, category `S`/19%),
+  bringing `taxExclusiveAmount` to EUR 900. Proves `taxExclusiveAmount = BT-106 − BT-107` (see
+  `docs/DATA-MODEL.md`'s "Document totals" section) when the allowance sits at document level
+  rather than on the line.
+- **`23.line-level-discount.invoice.json`** — the same scenario as `22`, but the EUR 100 allowance
+  (`Treuerabatt`) is attached to the line itself (BG-27) instead of the document, so
+  `lines[0].lineAmount` is already net (EUR 900) and there's no top-level `allowancesCharges` at
+  all. Same final totals as `22` (`taxExclusiveAmount` EUR 900), proving both paths reach the same
+  math.
+- **`24.combined-line-and-document-discount.invoice.json`** — combines `22` and `23`: the line has
+  its own EUR 100 allowance (`Treuerabatt`, BG-27) bringing `lineAmount` to EUR 900, *and* the
+  document has a separate EUR 50 allowance (`Sammelrabatt`, BG-20, category `S`/19%) applied on
+  top, bringing `taxExclusiveAmount` to EUR 850. Exists specifically to prove the two allowance
+  levels compose additively (`BT-109 = BT-106 − BT-107`, with `BT-106` already net of the line's
+  own allowance) rather than one masking or double-subtracting the other.
 
 ## References
 

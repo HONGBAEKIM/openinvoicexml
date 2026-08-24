@@ -19,6 +19,9 @@ import correctiveInvoice from "./18.corrective-invoice.invoice.json" with { type
 import downPayment from "./19.down-payment.invoice.json" with { type: "json" };
 import finalInvoice from "./20.final-invoice.invoice.json" with { type: "json" };
 import partialDelivery from "./21.partial-delivery.invoice.json" with { type: "json" };
+import documentLevelDiscount from "./22.document-level-discount.invoice.json" with { type: "json" };
+import lineLevelDiscount from "./23.line-level-discount.invoice.json" with { type: "json" };
+import combinedLineAndDocumentDiscount from "./24.combined-line-and-document-discount.invoice.json" with { type: "json" };
 
 export {
   domesticSimple,
@@ -42,10 +45,13 @@ export {
   downPayment,
   finalInvoice,
   partialDelivery,
+  documentLevelDiscount,
+  lineLevelDiscount,
+  combinedLineAndDocumentDiscount,
 };
 
 /**
- * All 21 fixtures as [label, data] pairs, in fixture-number order. Each label is numbered
+ * All 24 fixtures as [label, data] pairs, in fixture-number order. Each label is numbered
  * (matching the fixture's filename prefix) and annotated with its VAT category, so it shows
  * up that way in every test runner's output, wherever this list is consumed.
  */
@@ -71,4 +77,7 @@ export const allFixtures: [string, unknown][] = [
   ["19. down-payment (19% S)", downPayment],
   ["20. final-invoice (19% S)", finalInvoice],
   ["21. partial-delivery (19% S)", partialDelivery],
+  ["22. document-level-discount (19% S)", documentLevelDiscount],
+  ["23. line-level-discount (19% S)", lineLevelDiscount],
+  ["24. combined-line-and-document-discount (19% S)", combinedLineAndDocumentDiscount],
 ];
