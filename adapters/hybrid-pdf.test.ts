@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { PDFDocument } from "@cantoo/pdf-lib";
+import { PDFDocument, parsePDFAConformanceFromXmp } from "@cantoo/pdf-lib";
 
 import { toHybridPdf } from "./hybrid-pdf.js";
 import type { Invoice } from "../core/index.js";
@@ -17,6 +17,42 @@ describe("toHybridPdf", () => {
     const bytes = await toHybridPdf(domesticSimple as Invoice);
     const reloaded = await PDFDocument.load(bytes);
     expect(reloaded.getPageCount()).toBeGreaterThanOrEqual(1);
+  });
+
+  describe("PDF/A-3b conformance", () => {
+    // pdf-lib compresses indirect objects into object streams by default for PDF 1.7+ output,
+    // so the OutputIntent dict isn't literal text in `bytes` itself. Reload and re-save with
+    // useObjectStreams: false to get a flat, greppable byte stream for these structural checks —
+    // the XMP metadata stream itself is always written unfiltered either way.
+    async function toFlatText(invoice: Invoice): Promise<string> {
+      const bytes = await toHybridPdf(invoice);
+      const reloaded = await PDFDocument.load(bytes);
+      const flat = await reloaded.save({ useObjectStreams: false });
+      return Buffer.from(flat).toString("latin1");
+    }
+
+    it("declares the PDF/A-3b OutputIntent (ICC profile)", async () => {
+      const text = await toFlatText(domesticSimple as Invoice);
+      expect(text).toContain("/OutputIntents");
+      expect(text).toContain("GTS_PDFA1");
+    });
+
+    it("writes pdfaid:part=3 / pdfaid:conformance=B into the XMP metadata", async () => {
+      const bytes = await toHybridPdf(domesticSimple as Invoice);
+      const text = Buffer.from(bytes).toString("latin1");
+      expect(parsePDFAConformanceFromXmp(text)).toEqual({ part: 3, level: "B" });
+    });
+
+    it("introduces no transparency (ExtGState) objects", async () => {
+      const text = await toFlatText(domesticSimple as Invoice);
+      expect(text).not.toContain("/Type /ExtGState");
+    });
+
+    it("bumps the PDF header to version 1.7, as required for PDF/A part 3", async () => {
+      const bytes = await toHybridPdf(domesticSimple as Invoice);
+      const header = Buffer.from(bytes.slice(0, 8)).toString("ascii");
+      expect(header).toBe("%PDF-1.7");
+    });
   });
 
   // Structural smoke test only, across all fixtures: doesn't throw, starts with %PDF, reloads.

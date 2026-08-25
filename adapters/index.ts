@@ -4,7 +4,8 @@
 // Adapters:
 //   XRechnungAdapter  → UBL 2.1 XML (Phase 2, implemented)
 //   PdfAdapter        → PDF/A-3 hybrid with embedded XML (Phase 4, in progress — content/layout
-//                        done; PDF/A-3 conformance and XML embedding land in later Week 13 tasks)
+//                        and PDF/A-3 conformance basics done; XML embedding lands in a later
+//                        Week 13 task)
 
 export { toXRechnung } from "./xrechnung.js";
 export { toHybridPdf } from "./hybrid-pdf.js";

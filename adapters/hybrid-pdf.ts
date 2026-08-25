@@ -28,8 +28,9 @@ import {
  * and all positioning/drawing decisions live here; no field defaulting or derivation belongs in
  * this file.
  *
- * Scope for now: content and layout only. No PDF/A-3 OutputIntent/XMP, no embedded
- * XRechnung XML attachment — see the seam noted at the bottom of toHybridPdf().
+ * Also applies PDF/A-3b conformance basics (subset-embedded fonts, ICC OutputIntent/XMP via
+ * convertToPDFA()) at the end of toHybridPdf(). No embedded XRechnung XML attachment yet — see
+ * the seam noted at the bottom of toHybridPdf().
  *
  * Only opaque, solid-color fills are used anywhere in this file — no alpha/transparency — since
  * PDF/A-3 disallows transparency groups and it's cheap to avoid from the start.
@@ -437,10 +438,10 @@ async function embedFonts(doc: PDFDocument): Promise<Fonts> {
 }
 
 /**
- * Generates a human-readable hybrid invoice PDF from an Invoice. Content and layout only — no
- * PDF/A-3 OutputIntent/XMP and no embedded XRechnung XML attachment yet.
- * Those tasks insert their work between this function's layout step and the final doc.save()
- * call below.
+ * Generates a human-readable hybrid invoice PDF from an Invoice, with PDF/A-3b conformance
+ * basics (subset-embedded fonts, ICC OutputIntent, XMP pdfaid metadata) applied. No embedded
+ * XRechnung XML attachment yet — that task inserts its work between convertToPDFA() and the
+ * final doc.save() call below.
  */
 export async function toHybridPdf(invoice: Invoice): Promise<Uint8Array> {
   const fields = mapInvoiceToPdfFields(invoice);
@@ -456,7 +457,9 @@ export async function toHybridPdf(invoice: Invoice): Promise<Uint8Array> {
   drawPaymentInfo(layout, fields);
   drawFooter(layout, fields);
 
-  // (PDF/A-3 OutputIntent/XMP) and (doc.attach() for the XRechnung XML) insert
-  // their work here, before the final save.
+  // PDF/A-3b conformance: OutputIntent (ICC profile) + XMP pdfaid metadata. embedFacturX()
+  // (a later task) will replace this call — it invokes convertToPDFA() internally and adds the
+  // XML attachment + Factur-X XMP fields in one step.
+  doc.convertToPDFA({ conformance: "3B" });
   return doc.save();
 }
