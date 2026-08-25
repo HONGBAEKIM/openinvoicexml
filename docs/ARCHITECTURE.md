@@ -60,14 +60,14 @@ validation runs against one consistent representation.
 
 ## Module Map
 
-| Directory | Purpose |
-| --- | --- |
-| `core/` | TypeScript types for the internal invoice model — no dependencies on any other module |
-| `schemas/` | `invoice.schema.json` (JSON Schema, Draft-07) — the language-independent structural contract |
-| `validators/` | `validateBusinessRules()` + per-scenario `rules/*.ts`, plus `runKosit()` for external XML validation |
-| `adapters/` | Output adapters (XRechnung XML implemented, PDF/A-3 planned) |
-| `fixtures/` | Example invoice JSON files, one per legal scenario — see [`fixtures/README.md`](../fixtures/README.md) for the full list |
-| `docs/` | Project documentation |
+| Directory     | Purpose                                                                                                                  |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `core/`       | TypeScript types for the internal invoice model — no dependencies on any other module                                    |
+| `schemas/`    | `invoice.schema.json` (JSON Schema, Draft-07) — the language-independent structural contract                             |
+| `validators/` | `validateBusinessRules()` + per-scenario `rules/*.ts`, plus `runKosit()` for external XML validation                     |
+| `adapters/`   | Output adapters (XRechnung XML implemented, PDF/A-3 planned)                                                             |
+| `fixtures/`   | Example invoice JSON files, one per legal scenario — see [`fixtures/README.md`](../fixtures/README.md) for the full list |
+| `docs/`       | Project documentation                                                                                                    |
 
 ### `validators/`
 
@@ -108,13 +108,23 @@ Three layers, each catching a different class of error:
 
 ### No runtime dependencies
 
-The engine has zero production dependencies — `ajv`, `vitest`, `eslint`, `prettier`, and
-`typescript` are all devDependencies used only for this repo's own build/test/lint, not exported
-for consumers. `ajv` in particular is used solely inside `validators/test/00.invoice-schema.test.ts`
-to check `schemas/invoice.schema.json` against fixtures; it's not part of the runtime API. A
-consumer validating untyped JSON supplies their own JSON Schema validator. **Why:** a
-zero-dependency library is easier to embed, audit, and trust — invoice processing is a sensitive
-domain, and every dependency is a supply-chain risk.
+The engine has exactly two production dependencies, both scoped solely to the hybrid PDF/A-3
+adapter (`adapters/hybrid-pdf.ts`/`adapters/hybrid-pdf-mapping.ts`):
+[`@cantoo/pdf-lib`](https://github.com/cantoo-scribe/pdf-lib) and
+[`fontkit`](https://github.com/foliojs/fontkit) (the font engine `@cantoo/pdf-lib` requires,
+registered via `PDFDocument.registerFontkit()`, to embed a custom TTF font — it doesn't bundle one
+itself). PDF/A-3 conformance — font subsetting, ICC output intents, embedded-file attachments with
+`AFRelationship`, XMP metadata — isn't something that can reasonably be hand-rolled the way
+XRechnung's XML serialization was; these are a deliberate, narrowly scoped exception, not an
+abandonment of the zero-dependency stance for the rest of the engine. `ajv`, `vitest`, `eslint`,
+`prettier`, and `typescript` remain devDependencies used only for this repo's own build/test/lint,
+not exported for consumers. `ajv` in particular is used solely inside
+`validators/test/00.invoice-schema.test.ts` to check `schemas/invoice.schema.json` against
+fixtures; it's not part of the runtime API. A consumer validating untyped JSON supplies their own
+JSON Schema validator. **Why:** minimizing dependencies keeps the library easy to embed, audit,
+and trust — invoice processing is a sensitive domain, and every dependency is a supply-chain
+risk — so each one added, including this one, should be a deliberate, justified exception rather
+than a default.
 
 ---
 
@@ -133,13 +143,13 @@ Both `src/backend/src/` and `src/frontend/src/` use the same numbered-prefix con
 - This is a convention for predictable ordering and 1:1 backend/frontend parity, not a standard
   architecture — plain names would work fine at this project's size.
 
-| # | Slice | Status |
-| --- | --- | --- |
-| 000/100/200 | core / middleware-or-layout / routes-or-pages | Implemented (infra) |
-| 300–600 | _(reserved)_ | Not planned |
-| 700 | `invoicing` | Planned — next feature, wraps the root-level engine |
-| 800 | `beta` | Implemented — beta-program signup |
-| 900 | `developer` | Implemented — developer feedback signup |
+| #           | Slice                                         | Status                                              |
+| ----------- | --------------------------------------------- | --------------------------------------------------- |
+| 000/100/200 | core / middleware-or-layout / routes-or-pages | Implemented (infra)                                 |
+| 300–600     | _(reserved)_                                  | Not planned                                         |
+| 700         | `invoicing`                                   | Planned — next feature, wraps the root-level engine |
+| 800         | `beta`                                        | Implemented — beta-program signup                   |
+| 900         | `developer`                                   | Implemented — developer feedback signup             |
 
 The root-level `core/`, `adapters/`, and `validators/` (documented above) are the standalone
 invoice engine — no dependency on `src/backend` or any web-service concern. `700-invoicing` is

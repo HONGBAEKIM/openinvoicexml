@@ -17,19 +17,19 @@ Prerequisites: Node.js ≥ 20.0.0, npm, git.
 
 ### Available Commands
 
-| Command                 | What it does                                                                                |
-| ------------------------ | -------------------------------------------------------------------------------------------- |
-| `npm test`               | Run all tests (Vitest)                                                                       |
-| `npm run test:watch`     | Run tests in watch mode                                                                      |
-| `npm run test:coverage`  | Run tests with coverage report                                                               |
-| `npm run typecheck`      | Type-check without emitting files                                                            |
-| `npm run lint`           | Check for lint errors (ESLint)                                                               |
-| `npm run lint:fix`       | Auto-fix lint errors                                                                          |
-| `npm run format`         | Format all files (Prettier)                                                                  |
-| `npm run build`          | Compile TypeScript to `dist/`                                                                |
-| `make generate`          | Regenerate XML fixtures from `dist/` (run `npm run build` first)                             |
-| `make kosit-setup`       | One-time download of the KoSIT validator + XRechnung config (see [`COMPLIANCE.md`](COMPLIANCE.md#validating-xrechnung-output)) |
-| `make validate-kosit`    | Validate generated XML using KoSIT                                                            |
+| Command                 | What it does                                                                                                                                                                                                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `npm test`              | Run all tests (Vitest)                                                                                                                                                                                                                                                               |
+| `npm run test:watch`    | Run tests in watch mode                                                                                                                                                                                                                                                              |
+| `npm run test:coverage` | Run tests with coverage report                                                                                                                                                                                                                                                       |
+| `npm run typecheck`     | Type-check without emitting files                                                                                                                                                                                                                                                    |
+| `npm run lint`          | Check for lint errors (ESLint)                                                                                                                                                                                                                                                       |
+| `npm run lint:fix`      | Auto-fix lint errors                                                                                                                                                                                                                                                                 |
+| `npm run format`        | Format all files (Prettier)                                                                                                                                                                                                                                                          |
+| `npm run build`         | Compile TypeScript to `dist/`, then copy `adapters/assets/fonts/` into `dist/` (`tsc` only emits compiled `.js`/`.d.ts` — it doesn't copy binary assets, but `hybrid-pdf.ts` resolves its embedded fonts relative to its own compiled location, so they have to land in `dist/` too) |
+| `make generate`         | Regenerate XML fixtures from `dist/` (run `npm run build` first)                                                                                                                                                                                                                     |
+| `make kosit-setup`      | One-time download of the KoSIT validator + XRechnung config (see [`COMPLIANCE.md`](COMPLIANCE.md#validating-xrechnung-output))                                                                                                                                                       |
+| `make validate-kosit`   | Validate generated XML using KoSIT                                                                                                                                                                                                                                                   |
 
 ---
 
@@ -54,19 +54,31 @@ After changing the adapter or fixtures, regenerate XML output: `npm run build &&
 
 `tsconfig.json` can't hold comments, so the notable non-default options are documented here:
 
-| Option                       | Value      | Purpose                                                                        |
-| ------------------------------ | ---------- | --------------------------------------------------------------------------------- |
-| `module` / `moduleResolution` | `NodeNext` | Native ESM, matching `"type": "module"` in `package.json`                       |
-| `strict`                     | `true`     | All strict type-checking options                                              |
-| `noUncheckedIndexedAccess`   | `true`     | Treats `arr[i]` as possibly `undefined`                                        |
-| `exactOptionalPropertyTypes` | `true`     | Distinguishes a missing optional property from one explicitly set to `undefined` |
+| Option                        | Value      | Purpose                                                                          |
+| ----------------------------- | ---------- | -------------------------------------------------------------------------------- |
+| `module` / `moduleResolution` | `NodeNext` | Native ESM, matching `"type": "module"` in `package.json`                        |
+| `strict`                      | `true`     | All strict type-checking options                                                 |
+| `noUncheckedIndexedAccess`    | `true`     | Treats `arr[i]` as possibly `undefined`                                          |
+| `exactOptionalPropertyTypes`  | `true`     | Distinguishes a missing optional property from one explicitly set to `undefined` |
 
 Everything else is standard for a Node ESM library — see `tsconfig.json` directly.
 
 ### Dependency policy
 
-No runtime (`dependencies`) — only `devDependencies` (build/lint/format/test). See
-[`ARCHITECTURE.md`](ARCHITECTURE.md#no-runtime-dependencies) for why.
+Two runtime dependencies, both scoped to the hybrid PDF/A-3 adapter
+(`adapters/hybrid-pdf.ts`/`adapters/hybrid-pdf-mapping.ts`):
+
+- [`@cantoo/pdf-lib`](https://github.com/cantoo-scribe/pdf-lib) — PDF generation, ICC output
+  intents, embedded-file attachment, and XMP metadata.
+- [`fontkit`](https://github.com/foliojs/fontkit) — required by `@cantoo/pdf-lib` to embed custom
+  (non-`StandardFonts`) TTF/OTF fonts via `PDFDocument.registerFontkit()`; not bundled by
+  `@cantoo/pdf-lib` itself.
+
+These cover PDF/A-3 conformance mechanics — font subsetting, color/ICC handling, embedded-file
+attachment — that can't reasonably be hand-rolled the way XRechnung's XML serialization was.
+Everything else stays `devDependencies` (build/lint/format/test). See
+[`ARCHITECTURE.md`](ARCHITECTURE.md#no-runtime-dependencies) for why this is a scoped exception,
+not a change in policy for the rest of the engine.
 
 ---
 

@@ -21,8 +21,9 @@
     }
   },
   "scripts": {
-    "build": "tsc",
-    "build:watch": "tsc --watch",
+    "build": "tsc && npm run copy-assets",
+    "build:watch": "npm run copy-assets && tsc --watch",
+    "copy-assets": "mkdir -p dist/adapters/assets/fonts && cp adapters/assets/fonts/*.ttf dist/adapters/assets/fonts/",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -36,6 +37,7 @@
     "node": ">=20.0.0"
   },
   "devDependencies": {
+    "@types/fontkit": "^2.0.9",
     "@types/node": "^26.1.1",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
@@ -47,5 +49,9 @@
     "prettier": "^3.9.6",
     "typescript": "^5.5.0",
     "vitest": "^4.1.10"
+  },
+  "dependencies": {
+    "@cantoo/pdf-lib": "^2.9.1",
+    "fontkit": "^2.0.4"
   }
 }
