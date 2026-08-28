@@ -5,6 +5,7 @@ import {
   PageSizes,
   rgb,
   breakTextIntoLines,
+  AFRelationship,
   type PDFFont,
   type PDFPage,
 } from "@cantoo/pdf-lib";
@@ -12,7 +13,8 @@ import {
 // (create/open/etc.), so a namespace import is required here, not a default import.
 import * as fontkit from "fontkit";
 
-import type { Invoice, VatBreakdown } from "../core/index.js";
+// import type { Invoice, VatBreakdown } from "../core/index.js";
+import type { Invoice } from "../core/index.js";
 import { formatDateDE, formatAmountDE } from "../core/utils/format-de.js";
 import {
   mapInvoiceToPdfFields,
@@ -21,6 +23,7 @@ import {
   type PdfLineFields,
   type PdfVatSubtotalFields,
 } from "./hybrid-pdf-mapping.js";
+import { toXRechnung } from "./xrechnung.js";
 
 /**
  * PDF layout — turns already-resolved field structures (see hybrid-pdf-mapping.ts) into a
@@ -29,8 +32,8 @@ import {
  * this file.
  *
  * Also applies PDF/A-3b conformance basics (subset-embedded fonts, ICC OutputIntent/XMP via
- * convertToPDFA()) at the end of toHybridPdf(). No embedded XRechnung XML attachment yet — see
- * the seam noted at the bottom of toHybridPdf().
+ * convertToPDFA()) and embeds the XRechnung UBL XML as a PDF/A-3 associated file, both at the end
+ * of toHybridPdf() — see the seam noted there.
  *
  * Only opaque, solid-color fills are used anywhere in this file — no alpha/transparency — since
  * PDF/A-3 disallows transparency groups and it's cheap to avoid from the start.
@@ -45,15 +48,15 @@ const BLACK = rgb(0, 0, 0);
 const GRAY = rgb(0.4, 0.4, 0.4);
 const LIGHT_GRAY = rgb(0.85, 0.85, 0.85);
 
-const VAT_CATEGORY_LABELS_DE: Record<VatBreakdown["categoryCode"], string> = {
-  S: "Regelbesteuerung",
-  Z: "Nullsatz",
-  E: "Steuerfrei",
-  AE: "Steuerschuldnerschaft des Leistungsempfängers (§13b UStG)",
-  K: "Innergemeinschaftliche Lieferung (steuerfrei)",
-  G: "Ausfuhrlieferung (steuerfrei)",
-  O: "Nicht steuerbar",
-};
+// const VAT_CATEGORY_LABELS_DE: Record<VatBreakdown["categoryCode"], string> = {
+//   S: "Regelbesteuerung",
+//   Z: "Nullsatz",
+//   E: "Steuerfrei",
+//   AE: "Steuerschuldnerschaft des Leistungsempfängers (§13b UStG)",
+//   K: "Innergemeinschaftliche Lieferung (steuerfrei)",
+//   G: "Ausfuhrlieferung (steuerfrei)",
+//   O: "Nicht steuerbar",
+// };
 
 const DOCUMENT_TITLES_DE: Record<PdfDocumentFields["typeCode"], string> = {
   "380": "RECHNUNG",
@@ -68,6 +71,32 @@ const TABLE_COLUMNS = {
   unitPrice: 80,
   vatRate: 55,
   lineTotal: 90,
+};
+
+/** UN/CEFACT Recommendation 20 unit codes commonly seen on German invoices. */
+const UNIT_LABELS_DE: Record<string, string> = {
+  C62: "Stk.",
+  H87: "Stk.",
+  HUR: "Std.",
+  DAY: "Tag",
+  WEE: "Woche",
+  MON: "Monat",
+  ANN: "Jahr",
+  KGM: "kg",
+  GRM: "g",
+  TNE: "t",
+  MTR: "m",
+  CMT: "cm",
+  MMT: "mm",
+  MTK: "m²",
+  MTQ: "m³",
+  LTR: "l",
+  MLT: "ml",
+  KWH: "kWh",
+  MWH: "MWh",
+  LS: "Pausch.",
+  SET: "Satz",
+  PR: "Paar",
 };
 
 interface Fonts {
@@ -122,8 +151,8 @@ function drawAddressBlock(layout: Layout, x: number, y: number, party: PdfPartyF
     layout.page.drawText(line, {
       x,
       y: cursor,
-      size: 10,
-      font: i === 0 ? layout.fonts.bold : layout.fonts.regular,
+      size: 9,
+      font: layout.fonts.regular,
       color: BLACK,
     });
     cursor -= 13;
@@ -136,15 +165,46 @@ function drawHeader(layout: Layout, fields: PdfDocumentFields): void {
   const topY = layout.y;
 
   // Small return-address line above the buyer block, per German business-letter convention.
-  const returnAddress = `${fields.seller.name} · ${fields.seller.addressLine1} · ${fields.seller.postalCode} ${fields.seller.city}`;
-  page.drawText(returnAddress, { x: MARGIN, y: topY, size: 8, font: fonts.regular, color: GRAY });
+  const returnAddress = `${fields.seller.name}`;
+  page.drawText(returnAddress, { 
+    x: MARGIN, 
+    y: topY, 
+    size: 8, 
+    font: fonts.regular, 
+    color: GRAY,
+  });
 
-  const buyerBottomY = drawAddressBlock(layout, MARGIN, topY - 20, fields.buyer);
+  const returnAddress2 = `${fields.seller.addressLine1} · ${fields.seller.postalCode} ${fields.seller.city}`;
+  page.drawText(returnAddress2, { 
+    x: MARGIN, 
+    y: topY - 10, 
+    size: 8, 
+    font: fonts.regular, 
+    color: GRAY,
+  });
+
+  const buyerBottomY = drawAddressBlock(layout, MARGIN, topY - 30, fields.buyer);
 
   // Invoice metadata block, top right.
   const metaX = MARGIN + CONTENT_WIDTH - 200;
   const title = DOCUMENT_TITLES_DE[fields.typeCode];
-  page.drawText(title, { x: metaX, y: topY, size: 18, font: fonts.bold, color: BLACK });
+  const titleMaxWidth = MARGIN + CONTENT_WIDTH - metaX;
+
+  let titleSize = 18;
+
+  while (
+    fonts.bold.widthOfTextAtSize(title, titleSize) > titleMaxWidth &&
+    titleSize > 12
+  ) {
+    titleSize -= 0.5;
+  }
+
+  page.drawText(title, { 
+    x: metaX, 
+    y: topY, 
+    size: titleSize, 
+    font: fonts.bold, color: BLACK 
+  });
 
   const metaLines: [string, string][] = [
     ["Rechnungsnummer", fields.invoiceId],
@@ -157,10 +217,10 @@ function drawHeader(layout: Layout, fields: PdfDocumentFields): void {
   for (const [label, value] of metaLines) {
     page.drawText(`${label}:`, { x: metaX, y: metaY, size: 9, font: fonts.regular, color: GRAY });
     page.drawText(value, {
-      x: metaX + 90,
+      x: metaX + 95,
       y: metaY,
       size: 9,
-      font: fonts.bold,
+      font: fonts.regular,
       color: BLACK,
     });
     metaY -= 13;
@@ -242,7 +302,9 @@ function drawLineRow(layout: Layout, fields: PdfDocumentFields, line: PdfLineFie
   }
   x += TABLE_COLUMNS.description;
 
-  page.drawText(`${line.quantity} ${line.unitCode}`, {
+  const unitLabel = UNIT_LABELS_DE[line.unitCode] ?? line.unitCode;
+
+  page.drawText(`${line.quantity} ${unitLabel}`, {
     x,
     y: rowTop,
     size: 9,
@@ -301,7 +363,7 @@ function drawLineItemsTable(layout: Layout, fields: PdfDocumentFields): void {
 }
 
 function vatSubtotalLabel(subtotal: PdfVatSubtotalFields): string {
-  return `USt ${subtotal.rate}% (${VAT_CATEGORY_LABELS_DE[subtotal.categoryCode]})`;
+  return `USt ${subtotal.rate}%`;
 }
 
 function drawTotalsRow(layout: Layout, label: string, value: string, bold = false): void {
@@ -337,24 +399,29 @@ function drawTotalsBlock(layout: Layout, fields: PdfDocumentFields): void {
     layout,
     "Gesamtbetrag (brutto)",
     formatAmountDE(fields.taxInclusiveAmount, currency),
-    true,
+    // true,
   );
 
   if (fields.prepaidAmount !== undefined) {
     drawTotalsRow(layout, "Bereits gezahlt", formatAmountDE(-fields.prepaidAmount, currency));
   }
 
-  drawTotalsRow(layout, "Fälliger Betrag", formatAmountDE(fields.duePayableAmount, currency), true);
+  drawTotalsRow(
+    layout, 
+    "Fälliger Betrag", 
+    formatAmountDE(fields.duePayableAmount, currency), 
+    // true,
+  );
 }
 
 function drawPaymentInfo(layout: Layout, fields: PdfDocumentFields): void {
-  ensureSpace(layout, 70);
+  ensureSpace(layout, 82);
   const { page, fonts } = layout;
-  layout.y -= 10;
+  layout.y -= 22;
   page.drawText("Zahlungsinformationen", {
     x: MARGIN,
     y: layout.y,
-    size: 10,
+    size: 9,
     font: fonts.bold,
     color: BLACK,
   });
@@ -438,10 +505,8 @@ async function embedFonts(doc: PDFDocument): Promise<Fonts> {
 }
 
 /**
- * Generates a human-readable hybrid invoice PDF from an Invoice, with PDF/A-3b conformance
- * basics (subset-embedded fonts, ICC OutputIntent, XMP pdfaid metadata) applied. No embedded
- * XRechnung XML attachment yet — that task inserts its work between convertToPDFA() and the
- * final doc.save() call below.
+ * Generates a human-readable PDF/A-3 invoice from an Invoice, with PDF/A-3b conformance basics
+ * applied and the XRechnung UBL XML embedded as an associated file (AFRelationship=Alternative).
  */
 export async function toHybridPdf(invoice: Invoice): Promise<Uint8Array> {
   const fields = mapInvoiceToPdfFields(invoice);
@@ -457,9 +522,18 @@ export async function toHybridPdf(invoice: Invoice): Promise<Uint8Array> {
   drawPaymentInfo(layout, fields);
   drawFooter(layout, fields);
 
-  // PDF/A-3b conformance: OutputIntent (ICC profile) + XMP pdfaid metadata. embedFacturX()
-  // (a later task) will replace this call — it invokes convertToPDFA() internally and adds the
-  // XML attachment + Factur-X XMP fields in one step.
+  // PDF/A-3b conformance: OutputIntent (ICC profile) + XMP pdfaid metadata.
   doc.convertToPDFA({ conformance: "3B" });
+
+  // Embed the XRechnung UBL XML as the PDF/A-3 alternative representation.
+  // Do not use embedFacturX(): ZUGFeRD/Factur-X profiles require CII XML,
+  // while toXRechnung() produces UBL.
+  const xrechnungXml = toXRechnung(invoice);
+  await doc.attach(new TextEncoder().encode(xrechnungXml), "xrechnung.xml", {
+    mimeType: "text/xml",
+    afRelationship: AFRelationship.Alternative,
+    description: "XRechnung UBL invoice XML",
+  });
+
   return doc.save();
 }

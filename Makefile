@@ -1,7 +1,10 @@
 .ONESHELL:
-.PHONY: test type lint generate validate-xml kosit-setup validate-kosit
+.PHONY: test type lint generate validate-xml kosit-setup validate-kosit generate-pdf validate-pdf-attachment
 
 all: lint type test
+
+build:
+	npm run build
 
 test:
 	npm test
@@ -18,7 +21,8 @@ generate:
 	import { toXRechnung } from "./dist/adapters/index.js";
 	const names = readdirSync("fixtures")
 	  .filter(f => f.endsWith(".invoice.json"))
-	  .map(f => f.slice(0, -".invoice.json".length));
+	  .map(f => f.slice(0, -".invoice.json".length))
+	  .sort();
 	mkdirSync("dist/xml", { recursive: true });
 	for (const n of names) {
 	  const inv = JSON.parse(readFileSync("fixtures/" + n + ".invoice.json", "utf8"));
@@ -30,7 +34,7 @@ generate:
 validate-xml: generate
 	node --input-type=module <<'EOF'
 	import { readFileSync, readdirSync } from "fs";
-	for (const f of readdirSync("dist/xml").filter(f => f.endsWith(".xml"))) {
+	for (const f of readdirSync("dist/xml").filter(f => f.endsWith(".xml")).sort()) {
 	  const xml = readFileSync("dist/xml/" + f, "utf8");
 	  if (!xml.startsWith("<?xml")) throw new Error(f + ": missing XML declaration");
 	  console.log("✓ " + f);
@@ -55,7 +59,7 @@ validate-kosit: generate
 	node --input-type=module <<'EOF'
 	import { runKosit } from "./dist/validators/index.js";
 	import { readdirSync } from "fs";
-	const files = readdirSync("dist/xml").filter(f => f.endsWith(".xml")).map(f => "dist/xml/" + f);
+	const files = readdirSync("dist/xml").filter(f => f.endsWith(".xml")).sort().map(f => "dist/xml/" + f);
 	const results = runKosit(files);
 	let failed = false;
 	for (const r of results) {
@@ -63,6 +67,56 @@ validate-kosit: generate
 	  console.log((errors.length ? "✗ " : "✓ ") + r.file + (errors.length ? " — " + errors.length + " error(s)" : ""));
 	  for (const e of errors) console.log("    " + e.message);
 	  if (errors.length) failed = true;
+	}
+	if (failed) process.exit(1);
+	EOF
+
+# generates a PDF/A-3 invoice (with the XRechnung UBL XML embedded as an associated file) for
+# every fixture into dist/pdf/ — for manual inspection (open a PDF in a real viewer)
+generate-pdf:
+	node --input-type=module <<'EOF'
+	import { readFileSync, readdirSync, writeFileSync, mkdirSync } from "fs";
+	import { toHybridPdf } from "./dist/adapters/index.js";
+	const names = readdirSync("fixtures")
+	  .filter(f => f.endsWith(".invoice.json"))
+	  .map(f => f.slice(0, -".invoice.json".length))
+	  .sort();
+	mkdirSync("dist/pdf", { recursive: true });
+	for (const n of names) {
+	  const inv = JSON.parse(readFileSync("fixtures/" + n + ".invoice.json", "utf8"));
+	  writeFileSync("dist/pdf/" + n + ".pdf", await toHybridPdf(inv));
+	  console.log("wrote dist/pdf/" + n + ".pdf");
+	}
+	EOF
+
+# generates a PDF for every fixture, then extracts each one's embedded xrechnung.xml attachment
+# and compares it against toXRechnung() called directly on the same fixture; exits non-zero if
+# any fixture's attachment is missing or doesn't match byte-for-byte
+#
+# expected output will be
+# ✓ 01.domestic-simple
+# ✗ 02.domestic-multi-line — attachment content differs
+validate-pdf-attachment: generate-pdf
+	node --input-type=module <<'EOF'
+	import { readFileSync, readdirSync } from "fs";
+	import { PDFDocument } from "@cantoo/pdf-lib";
+	import { toXRechnung } from "./dist/adapters/index.js";
+	const names = readdirSync("fixtures")
+	  .filter(f => f.endsWith(".invoice.json"))
+	  .map(f => f.slice(0, -".invoice.json".length))
+	  .sort();
+	let failed = false;
+	for (const n of names) {
+	  const inv = JSON.parse(readFileSync("fixtures/" + n + ".invoice.json", "utf8"));
+	  const expected = toXRechnung(inv);
+	  const bytes = readFileSync("dist/pdf/" + n + ".pdf");
+	  const doc = await PDFDocument.load(bytes);
+	  const attachment = doc.getAttachments().find(a => a.name === "xrechnung.xml");
+	  const actual = attachment ? Buffer.from(attachment.data).toString("utf8") : undefined;
+	  const ok = actual === expected;
+	  const reason = !attachment ? " — no xrechnung.xml attachment found" : !ok ? " — attachment content differs" : "";
+	  console.log((ok ? "✓ " : "✗ ") + n + reason);
+	  if (!ok) failed = true;
 	}
 	if (failed) process.exit(1);
 	EOF

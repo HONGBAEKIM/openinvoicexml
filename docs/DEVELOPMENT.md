@@ -30,6 +30,8 @@ Prerequisites: Node.js ≥ 20.0.0, npm, git.
 | `make generate`         | Regenerate XML fixtures from `dist/` (run `npm run build` first)                                                                                                                                                                                                                     |
 | `make kosit-setup`      | One-time download of the KoSIT validator + XRechnung config (see [`COMPLIANCE.md`](COMPLIANCE.md#validating-xrechnung-output))                                                                                                                                                       |
 | `make validate-kosit`   | Validate generated XML using KoSIT                                                                                                                                                                                                                                                   |
+| `make generate-pdf`     | Regenerate PDF/A-3 invoices from `dist/` for every fixture (run `npm run build` first)                                                                                                                                                                                              |
+| `make validate-pdf-attachment` | Verify each generated PDF's embedded `xrechnung.xml` is byte-identical to `toXRechnung()`'s direct output                                                                                                                                                                    |
 
 ---
 
@@ -49,6 +51,8 @@ Example: unused variables, unsafe patterns, incorrect TypeScript/ESLint rules.
 Example: spacing, indentation, line breaks, quotes, trailing commas.
 
 After changing the adapter or fixtures, regenerate XML output: `npm run build && make generate`.
+The PDF/A-3 equivalent is `npm run build && make generate-pdf`; `make validate-pdf-attachment`
+verifies the embedded XML matches `toXRechnung()`'s direct output for every fixture.
 
 ### TypeScript configuration
 
