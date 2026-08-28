@@ -147,7 +147,7 @@ function drawAddressBlock(layout: Layout, x: number, y: number, party: PdfPartyF
     ...(party.countryCode !== "DE" ? [party.countryCode] : []),
   ];
   let cursor = y;
-  for (const [i, line] of lines.entries()) {
+  for (const line of lines) {
     layout.page.drawText(line, {
       x,
       y: cursor,
