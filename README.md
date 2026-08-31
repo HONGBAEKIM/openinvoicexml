@@ -12,12 +12,13 @@ Funded by [Prototype Fund](https://www.prototypefund.de/projects/openinvoicexml)
 
 - Generates XRechnung 3.x compliant UBL 2.1 XML from a structured JSON invoice
 - Validates output against KoSIT (the official German e-invoice validator)
-- Exports hybrid PDF/A-3b with embedded XML (Factur-X/ZUGFeRD profiles)
+- Exports hybrid PDF/A-3b with the XRechnung XML embedded as an associated file, veraPDF-
+  validated (Factur-X/ZUGFeRD profile support planned — see [ROADMAP.md](docs/ROADMAP.md))
 - Covers major German VAT and legal scenarios: [§19][ustg-19] small business, [§13b][ustg-13b] reverse charge, intra-EU supply, credit notes, down payment invoices, and more
 
 ## Status
 
-Early development — Phase 2 (XML Engine & Validation) in progress: XRechnung XML generation is implemented and validated locally against the official KoSIT validator (see [docs/COMPLIANCE.md](docs/COMPLIANCE.md#validating-xrechnung-output)). See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan.
+Early development — Phase 2 (XML Engine & Validation) in progress: XRechnung XML generation is implemented and validated locally against the official KoSIT validator (see [docs/COMPLIANCE.md](docs/COMPLIANCE.md#validating-this-projects-output)). See [docs/ROADMAP.md](docs/ROADMAP.md) for the full plan.
 
 ## Prerequisites
 

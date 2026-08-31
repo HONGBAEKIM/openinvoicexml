@@ -82,7 +82,7 @@ Three layers, each catching a different class of error:
   `ValidationIssue[]`, never throws.
 - **KoSIT validation** (`90.kosit.ts`) — a separate, external mechanism confirming the generated
   XML conforms to the XRechnung XSD/Schematron. See
-  [`COMPLIANCE.md`](COMPLIANCE.md#validating-xrechnung-output).
+  [`COMPLIANCE.md`](COMPLIANCE.md#validating-this-projects-output).
 
 ### `adapters/`
 
