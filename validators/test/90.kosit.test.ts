@@ -126,6 +126,7 @@ describe.skipIf(!available)("runKosit", () => {
 
     const results = runKosit([xmlPath], { jarPath: JAR_PATH, scenariosPath: SCENARIOS_PATH });
 
+    // Returning one KositResult per file
     expect(results).toHaveLength(1);
     expect(results[0]!.valid).toBe(false);
     expect(results[0]!.issues.some((issue) => issue.severity === "error")).toBe(true);

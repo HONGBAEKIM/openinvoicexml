@@ -81,7 +81,7 @@ export function runVeraPdf(pdfPaths: string[], options: VeraPdfOptions = {}): Ve
       env,
     });
   } catch (err) {
-    // ENOENT: file or command does not exist
+    // ENOENT: Error No Entry
     if (isNodeError(err) && err.code === "ENOENT") {
       throw new Error(
         "veraPDF validation requires a `java` binary (or a portable JRE at tools/jre/bin/java) " +

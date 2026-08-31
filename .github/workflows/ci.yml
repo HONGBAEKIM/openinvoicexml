@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [main]
 
-# 1.clean install → 2.lint → 3.type-check → 4.set up an external validator tool → 5.run tests
+# 1.clean install → 2.lint → 3.type-check → 4.set up external validator tools → 5.run tests
 # If any step fails, the workflow fails and (on a PR) shows up as a red ❌ 
 jobs:
   build:
@@ -32,5 +32,19 @@ jobs:
       # not something that silently skips (validators/test/90.kosit.test.ts's
       # describe.skipIf(!available) would otherwise let a missing jar/Java pass silently).
       - run: bash scripts/setup-kosit.sh
+
+      # Downloads and unattended-installs the veraPDF CLI (PDF/A-3 validator) into tools/ —
+      # same script used locally via `make verapdf-setup`. This makes
+      # validators/test/91.vera-pdf.test.ts an actual CI gate instead of silently
+      # skipping via describe.skipIf(!available). If no system Java is available,
+      # it can reuse the portable JRE installed by the preceding KoSIT setup step.
+      - run: bash scripts/setup-verapdf.sh
+
+      # Downloads the Mustang Project CLI jar (an independent, third-party e-invoicing tool)
+      # into tools/ — same script used locally via `make mustang-setup`. This makes
+      # validators/test/92.mustang.test.ts an actual CI gate instead of silently skipping
+      # via describe.skipIf(!available). Reuses the portable JRE from the KoSIT/veraPDF
+      # setup steps above if one was installed.
+      - run: bash scripts/setup-mustang.sh
 
       - run: npm test
