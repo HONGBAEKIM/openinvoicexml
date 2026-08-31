@@ -1,5 +1,5 @@
 .ONESHELL:
-.PHONY: test type lint generate validate-xml kosit-setup validate-kosit generate-pdf validate-pdf-attachment
+.PHONY: test type lint generate validate-xml kosit-setup validate-kosit generate-pdf validate-pdf-attachment verapdf-setup validate-verapdf validate-hybrid mustang-setup validate-mustang
 
 all: lint type test
 
@@ -99,8 +99,7 @@ generate-pdf:
 validate-pdf-attachment: generate-pdf
 	node --input-type=module <<'EOF'
 	import { readFileSync, readdirSync } from "fs";
-	import { PDFDocument } from "@cantoo/pdf-lib";
-	import { toXRechnung } from "./dist/adapters/index.js";
+	import { toXRechnung, extractEmbeddedXml } from "./dist/adapters/index.js";
 	const names = readdirSync("fixtures")
 	  .filter(f => f.endsWith(".invoice.json"))
 	  .map(f => f.slice(0, -".invoice.json".length))
@@ -109,14 +108,144 @@ validate-pdf-attachment: generate-pdf
 	for (const n of names) {
 	  const inv = JSON.parse(readFileSync("fixtures/" + n + ".invoice.json", "utf8"));
 	  const expected = toXRechnung(inv);
-	  const bytes = readFileSync("dist/pdf/" + n + ".pdf");
-	  const doc = await PDFDocument.load(bytes);
-	  const attachment = doc.getAttachments().find(a => a.name === "xrechnung.xml");
-	  const actual = attachment ? Buffer.from(attachment.data).toString("utf8") : undefined;
+	  let actual, reason = "";
+	  try {
+	    actual = await extractEmbeddedXml("dist/pdf/" + n + ".pdf");
+	  } catch (err) {
+	    reason = " — " + err.message;
+	  }
 	  const ok = actual === expected;
-	  const reason = !attachment ? " — no xrechnung.xml attachment found" : !ok ? " — attachment content differs" : "";
+	  if (!reason) reason = ok ? "" : " — attachment content differs";
 	  console.log((ok ? "✓ " : "✗ ") + n + reason);
 	  if (!ok) failed = true;
+	}
+	if (failed) process.exit(1);
+	EOF
+
+# one-time download + unattended install of the veraPDF CLI (PDF/A validator) into
+# tools/verapdf/ (git-ignored); reuses tools/jre/ if kosit-setup already downloaded a portable JRE
+verapdf-setup:
+	bash scripts/setup-verapdf.sh
+
+# generates a hybrid PDF for every fixture, then runs each through the real veraPDF validator;
+# exits non-zero if any file has an error-severity PDF/A-3B conformance finding
+validate-verapdf: generate-pdf
+	node --input-type=module <<'EOF'
+	import { runVeraPdf } from "./dist/validators/index.js";
+	import { readdirSync } from "fs";
+	const files = readdirSync("dist/pdf").filter(f => f.endsWith(".pdf")).sort().map(f => "dist/pdf/" + f);
+	const results = runVeraPdf(files);
+	let failed = false;
+	for (const r of results) {
+	  const errors = r.issues.filter(i => i.severity === "error");
+	  console.log((errors.length ? "✗ " : "✓ ") + r.file + (errors.length ? " — " + errors.length + " error(s)" : ""));
+	  for (const e of errors) console.log("    " + e.message);
+	  if (errors.length) failed = true;
+	}
+	if (failed) process.exit(1);
+	EOF
+
+# generates a hybrid PDF for every fixture, runs each through veraPDF (PDF/A-3b conformance),
+# then extracts the embedded XML (adapters/extractEmbeddedXml) and runs that through KoSIT
+# (XRechnung XSD/Schematron conformance) — the round-trip proof that what a real recipient
+# would extract from the PDF is itself a conformant XRechnung document, not just that the PDF
+# passes PDF/A-3b on its own. Extraction failures are reported per fixture, not a hard crash —
+# a broken attachment on one fixture shouldn't block extracting or KoSIT-checking the rest.
+validate-hybrid: generate-pdf
+	node --input-type=module <<'EOF'
+	import { readdirSync, mkdirSync, writeFileSync } from "fs";
+	import { extractEmbeddedXml } from "./dist/adapters/index.js";
+	import { runVeraPdf, runKosit } from "./dist/validators/index.js";
+	const names = readdirSync("fixtures")
+	  .filter(f => f.endsWith(".invoice.json"))
+	  .map(f => f.slice(0, -".invoice.json".length))
+	  .sort();
+	const pdfPaths = names.map(n => "dist/pdf/" + n + ".pdf");
+	let hybridFailed = false;
+
+	console.log("--- veraPDF (PDF/A-3b conformance) ---");
+	const veraResults = runVeraPdf(pdfPaths);
+	for (const r of veraResults) {
+	  const errors = r.issues.filter(i => i.severity === "error");
+	  console.log((errors.length ? "✗ " : "✓ ") + r.file + (errors.length ? " — " + errors.length + " error(s)" : ""));
+	  for (const e of errors) console.log("    " + e.message);
+	  if (errors.length) hybridFailed = true;
+	}
+
+	console.log("--- embedded XML extraction + KoSIT ---");
+	mkdirSync("dist/xml-from-pdf", { recursive: true });
+	const xmlPaths = [];
+	for (const n of names) {
+	  const pdfPath = "dist/pdf/" + n + ".pdf";
+	  try {
+	    const xml = await extractEmbeddedXml(pdfPath);
+	    const xmlPath = "dist/xml-from-pdf/" + n + ".xml";
+	    writeFileSync(xmlPath, xml);
+	    xmlPaths.push(xmlPath);
+	  } catch (err) {
+	    console.log("✗ " + pdfPath + " — " + (err instanceof Error ? err.message : String(err)));
+	    hybridFailed = true;
+	  }
+	}
+	const kositResults = runKosit(xmlPaths);
+	for (const r of kositResults) {
+	  const errors = r.issues.filter(i => i.severity === "error");
+	  console.log((errors.length ? "✗ " : "✓ ") + r.file + (errors.length ? " — " + errors.length + " error(s)" : ""));
+	  for (const e of errors) console.log("    " + e.message);
+	  if (errors.length) hybridFailed = true;
+	}
+
+	if (hybridFailed) process.exit(1);
+	EOF
+
+# one-time download of the Mustang Project CLI (a single runnable jar, an independent
+# third-party e-invoicing tool) into tools/mustang/ (git-ignored); reuses tools/jre/ if
+# kosit-setup or verapdf-setup already downloaded a portable JRE
+mustang-setup:
+	bash scripts/setup-mustang.sh
+
+# generates a hybrid PDF for every fixture, then cross-checks each one against Mustang Project's
+# CLI — an independent third-party tool, not this project's own code: Mustang's own --action
+# extract must recover XML byte-identical to toXRechnung()'s direct output, and Mustang's own
+# --action validate (run against that same extracted XML, not the PDF — see docs/COMPLIANCE.md
+# for why) must raise no error-severity EN16931/XRechnung UBL finding; exits non-zero on either
+# failure
+validate-mustang: generate-pdf
+	node --input-type=module <<'EOF'
+	import { readFileSync, readdirSync, mkdirSync, writeFileSync } from "fs";
+	import { toXRechnung } from "./dist/adapters/index.js";
+	import { extractWithMustang, runMustang } from "./dist/validators/index.js";
+	const names = readdirSync("fixtures")
+	  .filter(f => f.endsWith(".invoice.json"))
+	  .map(f => f.slice(0, -".invoice.json".length))
+	  .sort();
+	mkdirSync("dist/xml-from-mustang", { recursive: true });
+	let failed = false;
+	const xmlPaths = [];
+	for (const n of names) {
+	  const inv = JSON.parse(readFileSync("fixtures/" + n + ".invoice.json", "utf8"));
+	  const expected = toXRechnung(inv);
+	  const pdfPath = "dist/pdf/" + n + ".pdf";
+	  let extracted, reason = "";
+	  try {
+	    extracted = extractWithMustang(pdfPath);
+	  } catch (err) {
+	    reason = " — " + err.message;
+	  }
+	  const ok = extracted === expected;
+	  if (!reason) reason = ok ? "" : " — extracted content differs";
+	  console.log((ok ? "✓ " : "✗ ") + n + " (extract)" + reason);
+	  if (!ok) { failed = true; continue; }
+	  const xmlPath = "dist/xml-from-mustang/" + n + ".xml";
+	  writeFileSync(xmlPath, extracted);
+	  xmlPaths.push(xmlPath);
+	}
+	const results = runMustang(xmlPaths);
+	for (const r of results) {
+	  const errors = r.issues.filter(i => i.severity === "error");
+	  console.log((errors.length ? "✗ " : "✓ ") + r.file + " (validate)" + (errors.length ? " — " + errors.length + " error(s)" : ""));
+	  for (const e of errors) console.log("    " + e.message);
+	  if (errors.length) failed = true;
 	}
 	if (failed) process.exit(1);
 	EOF
