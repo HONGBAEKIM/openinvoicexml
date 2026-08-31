@@ -11,3 +11,6 @@ export type { KositIssue, KositResult, KositOptions } from "./90.kosit.js";
 
 export { runVeraPdf } from "./91.vera-pdf.js";
 export type { VeraPdfIssue, VeraPdfResult, VeraPdfOptions } from "./91.vera-pdf.js";
+
+export { runMustang, extractWithMustang } from "./92.mustang.js";
+export type { MustangIssue, MustangResult, MustangOptions } from "./92.mustang.js";
