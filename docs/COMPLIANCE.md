@@ -39,16 +39,20 @@ OpenInvoiceXML — this project's TypeScript business-rule validation
 | §3a UStG | [ustg-3a] | Place-of-supply default/B2B-override rule |
 | Anlage 3 / Anlage 4 UStG | [ustg-anlage-3] / [ustg-anlage-4] | Goods lists behind specific §13b subcases |
 | Umsatzsteuer-Anwendungserlass (UStAE) | [ustae] | Current BMF administrative guidance |
+| PDF/A-3 (ISO 19005-3) conformance | [verapdf] | Reference validator used by this project to check PDF/A-3b conformance against ISO 19005-3 — the same role KoSIT plays for XRechnung XML |
 
 ## Versions currently targeted
 
 - XRechnung specification: 3.0.2
 - XRechnung validator configuration bundle: `xrechnung-3.0.2-validator-configuration-2026-01-31`
 - KoSIT validator (`itplr-kosit/validator`): 1.6.2
+- veraPDF validator (`veraPDF/veraPDF-apps`): 1.30.2
+- Mustang Project CLI (`ZUGFeRD/mustangproject`, release tag `core-2.26.0`): 2.26.0
 - German law (UStG §13b, §19): checked as of 2026-07-26
 
-Pinned in `scripts/setup-kosit.sh` — bump there when a new XRechnung version ships. Don't update
-EN 16931 artefacts/code lists independently of the XRechnung config bundle version above.
+Pinned in `scripts/setup-kosit.sh` (KoSIT) / `scripts/setup-verapdf.sh` (veraPDF) /
+`scripts/setup-mustang.sh` (Mustang) — bump there when a new version ships. Don't update EN 16931
+artefacts/code lists independently of the XRechnung config bundle version above.
 
 ## Where this project uses each source
 
@@ -73,7 +77,12 @@ EN 16931 artefacts/code lists independently of the XRechnung config bundle versi
 
 ---
 
-## Validating XRechnung output
+## Validating this project's output
+
+Every output format this project generates is checked against an external reference validator,
+not just this project's own adapter logic.
+
+### XRechnung XML (KoSIT)
 
 `adapters/xrechnung.ts` produces XML by construction, but the generated document must still be
 checked against the official XRechnung XSD/Schematron rules. This project uses the **KoSIT
@@ -101,6 +110,83 @@ the build; accepted ones are tracked in [`LIMITATIONS.md`](LIMITATIONS.md).
 `runKosit()` (`validators/90.kosit.ts`) shells out to the KoSIT jar and parses its per-file XML
 report into `{ file, valid, issues: [{ severity, message, location }] }` — see [`API.md`](API.md).
 
+### Hybrid PDF/A-3 (veraPDF)
+
+`adapters/hybrid-pdf.ts` produces a PDF/A-3b invoice with the XRechnung UBL XML embedded as an
+associated file, but the generated PDF must still be checked against the official PDF/A-3
+conformance rules (ISO 19005-3) — fonts, color spaces, XMP metadata. This project uses the
+**veraPDF validator** as its reference toolchain, wired into the same `make` target convention as
+KoSIT.
+
+**Prerequisites:** No pre-installed Java is required. `make verapdf-setup` uses the project's
+portable JRE if available, otherwise a compatible system Java, and downloads the portable JRE
+when necessary. Network access is required for the initial setup.
+
+```bash
+make verapdf-setup      # one-time: downloads and installs the veraPDF CLI into tools/verapdf/
+make validate-verapdf   # regenerates hybrid PDFs from all fixtures and runs each through veraPDF
+```
+
+Output looks like:
+
+```
+✓ dist/pdf/domestic-simple.pdf
+✗ dist/pdf/exempt.pdf — 1 error(s)
+    6.2.11.4.1: The font program is not embedded
+```
+
+Exits non-zero on any `error`-severity finding — veraPDF's PDF/A-3b conformance model is binary
+(compliant/non-compliant), so every failed check is an error; there's no separate warning tier the
+way KoSIT's Schematron severities have.
+
+`runVeraPdf()` (`validators/91.vera-pdf.ts`) shells out to the installed veraPDF CLI and parses
+its batch XML report into `{ file, valid, issues: [{ severity, message, location }] }` — see
+[`API.md`](API.md).
+
+**Not a Factur-X/ZUGFeRD hybrid.** The embedded XML is XRechnung UBL, not CII — every Factur-X/
+ZUGFeRD conformance level (including the `XRECHNUNG` profile name) requires CII syntax, so this
+PDF deliberately carries no `fx:` XMP metadata claiming ZUGFeRD/Factur-X conformance — see
+[`LIMITATIONS.md`](LIMITATIONS.md). All 30 fixtures pass veraPDF's PDF/A-3b profile with zero
+errors.
+
+`make validate-hybrid` automates a round-trip check across all 30 fixtures: it runs veraPDF
+against every generated hybrid PDF, then extracts each one's embedded XML
+(`extractEmbeddedXml()`, `adapters/hybrid-pdf.ts`) and runs *that* through KoSIT — proving what a
+real recipient would actually extract from the PDF is itself a conformant XRechnung document, not
+just that the PDF passes PDF/A-3b on its own.
+
+### Cross-tool corroboration (Mustang Project)
+
+`make validate-mustang` runs the same kind of round-trip proof as `validate-hybrid`, but through
+an independent, third-party tool instead of this project's own `extractEmbeddedXml()`: the
+[Mustang Project][mustang-tool] CLI's own `--action extract` must recover XML byte-for-byte
+identical to `toXRechnung()`'s direct output from every one of the 30 generated hybrid PDFs
+(despite the PDF not being ZUGFeRD-branded), and Mustang's own `--action validate` — run against
+that *extracted* XML, not the PDF — must independently corroborate this project's EN16931/
+XRechnung UBL validation findings with zero error-severity findings.
+
+Validating the extracted XML rather than the PDF directly is a deliberate choice: pointing
+`--action validate` at the PDF itself pulls in Mustang's own Factur-X/PDF-profile interpretation
+of that PDF (e.g. `[BR-DE-...]`-unrelated complaints about missing `fx:` XMP metadata, and
+`Factur-X/ZUGFeRD and Order-X are always strictly CII only, no UBL allowed`) — true statements
+about Factur-X/ZUGFeRD, but irrelevant to whether this project's XRechnung UBL output is itself
+conformant. `runMustang()` can still validate a PDF directly (exercised as a capability check in
+`validators/test/92.mustang.test.ts`, not as the gating Makefile check) for exactly that reason.
+
+**Prerequisites:** same as KoSIT/veraPDF — `make mustang-setup` downloads the pinned Mustang CLI
+jar (and a portable JRE if none is available) into `tools/mustang/`.
+
+```bash
+make mustang-setup      # one-time: downloads tools/mustang/mustang-cli.jar
+make validate-mustang   # regenerates hybrid PDFs, extracts+diffs, then validates each via Mustang
+```
+
+`runMustang()`/`extractWithMustang()` (`validators/92.mustang.ts`) shell out to the Mustang CLI
+jar. Unlike KoSIT/veraPDF, Mustang's process exit code is a deliberate, meaningful validity signal
+(it exits non-zero exactly when its own report's status is `invalid`), so the wrapper cross-checks
+the exit code against the parsed report rather than ignoring it — see [`API.md`](API.md) for the
+`MustangResult`/`MustangIssue` shapes.
+
 [en16931]: https://github.com/ConnectingEurope/eInvoicing-EN16931
 [en16931-artefacts]: https://ec.europa.eu/digital-building-blocks/sites/display/DIGITAL/Registry+of+supporting+artefacts+to+implement+EN16931
 [ustae]: https://www.bundesfinanzministerium.de/ustae
@@ -114,4 +200,6 @@ report into `{ file, valid, issues: [{ severity, message, location }] }` — see
 [ustg-6a]: https://www.gesetze-im-internet.de/ustg_1980/__6a.html
 [ustg-anlage-3]: https://www.gesetze-im-internet.de/ustg_1980/anlage_3.html
 [ustg-anlage-4]: https://www.gesetze-im-internet.de/ustg_1980/anlage_4.html
+[verapdf]: https://verapdf.org/
 [xrechnung-spec]: https://xeinkauf.de/xrechnung/
+[mustang-tool]: https://github.com/ZUGFeRD/mustangproject

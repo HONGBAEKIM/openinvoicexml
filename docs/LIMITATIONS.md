@@ -14,7 +14,7 @@ item (statutory citations, per-subcase eligibility conditions) is preserved in
 | Export customs reference | No dedicated field — use `note` (BT-22) as a workaround |
 | Place of supply — goods/B2C/special categories | Only the default + B2B-service-override rule is checked (`PLACE_OF_SUPPLY_CROSS_BORDER`, warning-only, never blocks). Goods vs. services, B2C, and special categories (real estate, transport, events, catering) aren't modeled — see [§3a UStG][ustg-3a] |
 | Deliver-to city/postal code (`BR-DE-10`/`BR-DE-11`) | Only country code (BT-80) is enforced by the TS validator; a `deliverTo` address missing city/postal code passes here but is rejected by real KoSIT — populate them anyway |
-| Hybrid PDF/A-3 (Factur-X/ZUGFeRD) | Not yet implemented — see [`ROADMAP.md`](ROADMAP.md) |
+| Factur-X/ZUGFeRD hybrid profiles (MINIMUM/BASIC/EN 16931/XRECHNUNG) | Hybrid PDF/A-3 generation exists (XRechnung UBL attachment, veraPDF-validated with zero errors) but claims no Factur-X/ZUGFeRD conformance level — every ZUGFeRD profile requires CII XML, not UBL; needs a dedicated CII adapter first. A `profile: "XRECHNUNG" \| "EN16931"` API parameter exists (`adapters/hybrid-pdf.ts`) but currently has no effect. The originally planned `fx:ConformanceLevel` metadata cannot be used because it would imply Factur-X/ZUGFeRD conformance for a UBL attachment. Alternatives such as a project-owned XMP extension were considered, but Week 15 deliberately deferred defining a replacement metadata model until there is a concrete interoperability requirement — see [ROADMAP.md](ROADMAP.md) for the eventual CII adapter work |
 
 ## §13b UStG reverse-charge subcases
 
@@ -45,7 +45,13 @@ identifier — falls back to the generic `AE` checks only.
 
 - **XML (XRechnung UBL 2.1)** — implemented, all current fixtures pass KoSIT with zero
   `error`-severity findings.
-- **Hybrid PDF/A-3** — not yet implemented (see [`ROADMAP.md`](ROADMAP.md)).
+- **Hybrid PDF/A-3** — implemented (`adapters/hybrid-pdf.ts`). The current hybrid PDFs pass
+  veraPDF's PDF/A-3b profile with zero errors across all fixtures. `make validate-mustang`
+  independently confirms, via the Mustang Project CLI (a third-party tool, not this project's
+  own code), that all 30 fixtures' embedded XML extracts byte-for-byte identically to
+  `toXRechnung()` and passes Mustang's own EN16931/XRechnung UBL validation with zero errors.
+  Not a Factur-X/ZUGFeRD hybrid — see "Not supported" above and [`ROADMAP.md`](ROADMAP.md) for
+  Week 15's profile-support plan.
 
 ## Legal scenarios
 

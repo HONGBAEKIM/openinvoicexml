@@ -28,10 +28,15 @@ Prerequisites: Node.js ≥ 20.0.0, npm, git.
 | `npm run format`        | Format all files (Prettier)                                                                                                                                                                                                                                                          |
 | `npm run build`         | Compile TypeScript to `dist/`, then copy `adapters/assets/fonts/` into `dist/` (`tsc` only emits compiled `.js`/`.d.ts` — it doesn't copy binary assets, but `hybrid-pdf.ts` resolves its embedded fonts relative to its own compiled location, so they have to land in `dist/` too) |
 | `make generate`         | Regenerate XML fixtures from `dist/` (run `npm run build` first)                                                                                                                                                                                                                     |
-| `make kosit-setup`      | One-time download of the KoSIT validator + XRechnung config (see [`COMPLIANCE.md`](COMPLIANCE.md#validating-xrechnung-output))                                                                                                                                                       |
+| `make kosit-setup`      | One-time download of the KoSIT validator + XRechnung config (see [`COMPLIANCE.md`](COMPLIANCE.md#validating-this-projects-output))                                                                                                                                                       |
 | `make validate-kosit`   | Validate generated XML using KoSIT                                                                                                                                                                                                                                                   |
 | `make generate-pdf`     | Regenerate PDF/A-3 invoices from `dist/` for every fixture (run `npm run build` first)                                                                                                                                                                                              |
 | `make validate-pdf-attachment` | Verify each generated PDF's embedded `xrechnung.xml` is byte-identical to `toXRechnung()`'s direct output                                                                                                                                                                    |
+| `make verapdf-setup`    | One-time download + install of the veraPDF CLI (see [`COMPLIANCE.md`](COMPLIANCE.md#validating-this-projects-output)) |
+| `make validate-verapdf` | Validate generated hybrid PDFs using veraPDF                                                                          |
+| `make validate-hybrid`  | Validate every fixture's hybrid PDF with veraPDF, then extract and KoSIT-check its embedded XML |
+| `make mustang-setup`    | One-time download of the Mustang Project CLI (see [`COMPLIANCE.md`](COMPLIANCE.md#validating-this-projects-output)) |
+| `make validate-mustang` | Cross-check every fixture's hybrid PDF against the Mustang Project CLI: extract-and-diff, then validate the extracted XML |
 
 ---
 
