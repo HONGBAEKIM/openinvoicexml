@@ -1,7 +1,7 @@
 import type { Invoice } from "../core/index.js";
 import { validateBusinessRules, type ValidationIssue } from "../validators/02.business-rules.js";
 import { toXRechnung } from "./xrechnung.js";
-import { toHybridPdf } from "./hybrid-pdf.js";
+import { toHybridPdf, type HybridPdfOptions } from "./hybrid-pdf.js";
 
 export interface GenerateInvoiceResult {
   /** The generated XRechnung XML, or null if business-rule validation found an error. */
@@ -35,8 +35,11 @@ export interface GenerateHybridPdfResult {
  * while toXRechnung() and generateInvoice() are synchronous; not worth changing that existing
  * sync contract just to unify the two.
  */
-export async function generateHybridPdf(invoice: Invoice): Promise<GenerateHybridPdfResult> {
+export async function generateHybridPdf(
+  invoice: Invoice,
+  options: HybridPdfOptions = {},
+): Promise<GenerateHybridPdfResult> {
   const issues = validateBusinessRules(invoice);
   const hasErrors = issues.some((issue) => issue.severity === "error");
-  return { pdf: hasErrors ? null : await toHybridPdf(invoice), issues };
+  return { pdf: hasErrors ? null : await toHybridPdf(invoice, options), issues };
 }

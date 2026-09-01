@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 
-import { generateInvoice } from "./generate-invoice.js";
+import { generateInvoice, generateHybridPdf } from "./generate-invoice.js";
 import type { Invoice } from "../core/index.js";
 
-import { allFixtures, reducedRate } from "../fixtures/index.js";
+import { allFixtures, reducedRate, domesticSimple } from "../fixtures/index.js";
 
 /** Deep-clones a fixture so mutations in one test don't leak into others. */
 function clone<T>(fixture: T): T {
@@ -29,6 +29,34 @@ describe("generateInvoice", () => {
     const result = generateInvoice(invoice);
 
     expect(result.xml).toBeNull();
+    expect(result.issues.some((issue) => issue.severity === "error")).toBe(true);
+  });
+});
+
+describe("generateHybridPdf", () => {
+  it("generates a PDF with no error-severity issues", async () => {
+    const result = await generateHybridPdf(domesticSimple as Invoice);
+
+    expect(result.issues.filter((issue) => issue.severity === "error")).toEqual([]);
+    expect(result.pdf).not.toBeNull();
+    expect(result.pdf).toBeInstanceOf(Uint8Array);
+  });
+
+  it("forwards the profile option through to toHybridPdf without disturbing the error gate", async () => {
+    const result = await generateHybridPdf(domesticSimple as Invoice, { profile: "XRECHNUNG" });
+
+    expect(result.issues.filter((issue) => issue.severity === "error")).toEqual([]);
+    expect(result.pdf).not.toBeNull();
+  });
+
+  it("withholds the PDF and reports issues for an invoice with a business-rule error", async () => {
+    const invoice = clone(reducedRate) as Invoice;
+    // 15% is not a valid category 'S' rate (only 19% or 7% are allowed)
+    invoice.lines[0]!.vatRate = 15;
+
+    const result = await generateHybridPdf(invoice);
+
+    expect(result.pdf).toBeNull();
     expect(result.issues.some((issue) => issue.severity === "error")).toBe(true);
   });
 });
