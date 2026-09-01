@@ -505,10 +505,32 @@ async function embedFonts(doc: PDFDocument): Promise<Fonts> {
 }
 
 /**
+ * Which e-invoice conformance profile is selected for hybrid PDF generation.
+ *
+ * Currently supported profiles are limited to the UBL-based generation capabilities of this
+ * project. A TS union is additive — this can grow later without a breaking change.
+ */
+export type EInvoiceProfile = "XRECHNUNG" | "EN16931";
+
+export interface HybridPdfOptions {
+  /** Defaults to "EN16931". No visible effect yet — see docs/API.md. */
+  profile?: EInvoiceProfile;
+}
+
+/**
  * Generates a human-readable PDF/A-3 invoice from an Invoice, with PDF/A-3b conformance basics
  * applied and the XRechnung UBL XML embedded as an associated file (AFRelationship=Alternative).
  */
-export async function toHybridPdf(invoice: Invoice): Promise<Uint8Array> {
+export async function toHybridPdf(
+  invoice: Invoice,
+  options: HybridPdfOptions = {},
+): Promise<Uint8Array> {
+  // Resolved but not yet consumed: which XMP field (if any) should carry this, without
+  // implying Factur-X/ZUGFeRD conformance this UBL-only document can't claim, is still an
+  // open question for a future task, not decided here.
+  const profile = options.profile ?? "EN16931";
+  void profile;
+
   const fields = mapInvoiceToPdfFields(invoice);
 
   const doc = await PDFDocument.create();
@@ -536,4 +558,18 @@ export async function toHybridPdf(invoice: Invoice): Promise<Uint8Array> {
   });
 
   return doc.save();
+}
+
+/**
+ * Extracts and decodes the xrechnung.xml attachment from a generated hybrid PDF on disk.
+ * Throws if the PDF has no such attachment.
+ */
+export async function extractEmbeddedXml(pdfPath: string): Promise<string> {
+  const bytes = readFileSync(pdfPath);
+  const doc = await PDFDocument.load(bytes);
+  const attachment = doc.getAttachments().find((a) => a.name === "xrechnung.xml");
+  if (!attachment) {
+    throw new Error(`No xrechnung.xml attachment found in ${pdfPath}`);
+  }
+  return Buffer.from(attachment.data).toString("utf8");
 }

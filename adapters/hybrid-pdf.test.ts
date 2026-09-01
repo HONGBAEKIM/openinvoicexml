@@ -1,7 +1,11 @@
-import { describe, it, expect } from "vitest";
+import { writeFileSync, mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+import { describe, it, expect, afterAll } from "vitest";
 import { PDFDocument, parsePDFAConformanceFromXmp, AFRelationship } from "@cantoo/pdf-lib";
 
-import { toHybridPdf } from "./hybrid-pdf.js";
+import { toHybridPdf, extractEmbeddedXml } from "./hybrid-pdf.js";
 import { toXRechnung } from "./xrechnung.js";
 import type { Invoice } from "../core/index.js";
 
@@ -72,6 +76,54 @@ describe("toHybridPdf", () => {
       const attachment = reloaded.getAttachments().find((a) => a.name === "xrechnung.xml");
       expect(Buffer.from(attachment!.data).toString("utf-8")).toBe(
         toXRechnung(domesticSimple as Invoice),
+      );
+    });
+  });
+
+  describe("profile option", () => {
+    // profile currently has no effect on generated output — both values produce the same
+    // working hybrid PDF. Not asserting byte-identical output (too strict a bar for a
+    // generated PDF; unrelated pdf-lib changes could alter serialization without changing
+    // anything this test cares about) — just that both values still produce a valid,
+    // reloadable PDF/A-3 with the XRechnung attachment, same as the no-options call above.
+    it.each(["XRECHNUNG", "EN16931"] as const)(
+      "produces a valid hybrid PDF with profile %s",
+      async (profile) => {
+        const bytes = await toHybridPdf(domesticSimple as Invoice, { profile });
+        expect(bytes).toBeInstanceOf(Uint8Array);
+        const reloaded = await PDFDocument.load(bytes);
+        expect(reloaded.getPageCount()).toBeGreaterThanOrEqual(1);
+        expect(reloaded.getAttachments().some((a) => a.name === "xrechnung.xml")).toBe(true);
+      },
+    );
+  });
+
+  describe("extractEmbeddedXml", () => {
+    const dir = mkdtempSync(join(tmpdir(), "hybrid-pdf-extract-test-"));
+
+    afterAll(() => {
+      rmSync(dir, { recursive: true, force: true });
+    });
+
+    it("extracts XML byte-identical to toXRechnung()'s direct output", async () => {
+      const bytes = await toHybridPdf(domesticSimple as Invoice);
+      const pdfPath = join(dir, "domestic-simple.pdf");
+      writeFileSync(pdfPath, bytes);
+
+      const extracted = await extractEmbeddedXml(pdfPath);
+
+      expect(extracted).toBe(toXRechnung(domesticSimple as Invoice));
+    });
+
+    it("throws a clear error when the PDF has no xrechnung.xml attachment", async () => {
+      const plainDoc = await PDFDocument.create();
+      plainDoc.addPage();
+      const bytes = await plainDoc.save();
+      const pdfPath = join(dir, "plain.pdf");
+      writeFileSync(pdfPath, bytes);
+
+      await expect(extractEmbeddedXml(pdfPath)).rejects.toThrow(
+        `No xrechnung.xml attachment found in ${pdfPath}`,
       );
     });
   });
