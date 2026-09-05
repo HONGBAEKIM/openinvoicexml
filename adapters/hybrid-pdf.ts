@@ -6,6 +6,8 @@ import {
   rgb,
   breakTextIntoLines,
   AFRelationship,
+  embedFacturX,
+  type FacturXConformanceLevel,
   type PDFFont,
   type PDFPage,
 } from "@cantoo/pdf-lib";
@@ -15,6 +17,7 @@ import * as fontkit from "fontkit";
 
 // import type { Invoice, VatBreakdown } from "../core/index.js";
 import type { Invoice } from "../core/index.js";
+import type { EInvoiceProfile } from "../core/types/profile.js";
 import { formatDateDE, formatAmountDE } from "../core/utils/format-de.js";
 import {
   mapInvoiceToPdfFields,
@@ -24,6 +27,7 @@ import {
   type PdfVatSubtotalFields,
 } from "./hybrid-pdf-mapping.js";
 import { toXRechnung } from "./xrechnung.js";
+import { toCii } from "./cii.js";
 
 /**
  * PDF layout — turns already-resolved field structures (see hybrid-pdf-mapping.ts) into a
@@ -505,16 +509,38 @@ async function embedFonts(doc: PDFDocument): Promise<Fonts> {
 }
 
 /**
- * Which e-invoice conformance profile is selected for hybrid PDF generation.
- *
  * Currently supported profiles are limited to the UBL-based generation capabilities of this
  * project. A TS union is additive — this can grow later without a breaking change.
  */
-export type EInvoiceProfile = "XRECHNUNG" | "EN16931";
+export type { EInvoiceProfile } from "../core/types/profile.js";
 
 export interface HybridPdfOptions {
   /** Defaults to "EN16931". No visible effect yet — see docs/API.md. */
   profile?: EInvoiceProfile;
+}
+
+/**
+ * Draws the human-readable invoice pages shared by every hybrid-PDF entry point
+ * (`toHybridPdf()`, `toFacturXPdf()`). Does not apply PDF/A conformance or attach any XML —
+ * each caller does that itself, since the two entry points need different associated-file
+ * relationships/XMP (UBL via plain `doc.attach()`, CII via `embedFacturX()`, which already
+ * performs its own PDF/A-3 conversion internally).
+ */
+async function buildInvoicePages(invoice: Invoice): Promise<PDFDocument> {
+  const fields = mapInvoiceToPdfFields(invoice);
+
+  const doc = await PDFDocument.create();
+  const fonts = await embedFonts(doc);
+  const { page, y } = startPage(doc);
+  const layout: Layout = { doc, page, fonts, y };
+
+  drawHeader(layout, fields);
+  drawLineItemsTable(layout, fields);
+  drawTotalsBlock(layout, fields);
+  drawPaymentInfo(layout, fields);
+  drawFooter(layout, fields);
+
+  return doc;
 }
 
 /**
@@ -531,18 +557,7 @@ export async function toHybridPdf(
   const profile = options.profile ?? "EN16931";
   void profile;
 
-  const fields = mapInvoiceToPdfFields(invoice);
-
-  const doc = await PDFDocument.create();
-  const fonts = await embedFonts(doc);
-  const { page, y } = startPage(doc);
-  const layout: Layout = { doc, page, fonts, y };
-
-  drawHeader(layout, fields);
-  drawLineItemsTable(layout, fields);
-  drawTotalsBlock(layout, fields);
-  drawPaymentInfo(layout, fields);
-  drawFooter(layout, fields);
+  const doc = await buildInvoicePages(invoice);
 
   // PDF/A-3b conformance: OutputIntent (ICC profile) + XMP pdfaid metadata.
   doc.convertToPDFA({ conformance: "3B" });
@@ -561,15 +576,57 @@ export async function toHybridPdf(
 }
 
 /**
- * Extracts and decodes the xrechnung.xml attachment from a generated hybrid PDF on disk.
- * Throws if the PDF has no such attachment.
+ * `EInvoiceProfile` values ("XRECHNUNG"/"EN16931", no space) don't literally match
+ * `@cantoo/pdf-lib`'s `FacturXConformanceLevel` values — confirmed against its real source
+ * (`node_modules/@cantoo/pdf-lib/src/api/pdfa/facturx.ts`): XRECHNUNG matches as-is, but the
+ * generic EN16931 profile is spelled `"EN 16931"` (with a space) in `fx:ConformanceLevel`. Map
+ * explicitly rather than passing `profile` straight through.
  */
-export async function extractEmbeddedXml(pdfPath: string): Promise<string> {
+const FACTUR_X_CONFORMANCE_LEVEL: Record<EInvoiceProfile, FacturXConformanceLevel> = {
+  EN16931: "EN 16931",
+  XRECHNUNG: "XRECHNUNG",
+};
+
+/**
+ * Generates a human-readable PDF/A-3 invoice from an Invoice, with the CII invoice XML embedded
+ * as a Factur-X/ZUGFeRD hybrid document (`embedFacturX()` sets the `fx:` XMP properties,
+ * the PDF/A extension schema, and PDF/A-3 conformance itself). Same visual layout as
+ * `toHybridPdf()`, but embeds `toCii()` output instead of `toXRechnung()` — the two coexist as
+ * separate entry points; this one makes a real Factur-X/ZUGFeRD conformance claim, `toHybridPdf()`
+ * does not.
+ */
+export async function toFacturXPdf(
+  invoice: Invoice,
+  options: HybridPdfOptions = {},
+): Promise<Uint8Array> {
+  const profile = options.profile ?? "EN16931";
+
+  const doc = await buildInvoicePages(invoice);
+
+  const ciiXml = toCii(invoice, { profile });
+  await embedFacturX(doc, new TextEncoder().encode(ciiXml), {
+    conformanceLevel: FACTUR_X_CONFORMANCE_LEVEL[profile],
+    fileName: "factur-x.xml",
+    description: "Factur-X/ZUGFeRD CII invoice data",
+  });
+
+  return doc.save();
+}
+
+/**
+ * Extracts and decodes an XML attachment (`xrechnung.xml` by default, or `"factur-x.xml"` for
+ * `toFacturXPdf()` output) from a generated hybrid PDF on disk. Throws if the PDF has no such
+ * attachment.
+ */
+export async function extractEmbeddedXml(
+  pdfPath: string,
+  attachmentName = "xrechnung.xml",
+): Promise<string> {
   const bytes = readFileSync(pdfPath);
   const doc = await PDFDocument.load(bytes);
-  const attachment = doc.getAttachments().find((a) => a.name === "xrechnung.xml");
+  const attachment = doc.getAttachments().find((a) => a.name === attachmentName);
   if (!attachment) {
-    throw new Error(`No xrechnung.xml attachment found in ${pdfPath}`);
+    throw new Error(`No ${attachmentName} attachment found in ${pdfPath}`);
   }
   return Buffer.from(attachment.data).toString("utf8");
 }
